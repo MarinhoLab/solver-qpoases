@@ -21,7 +21,7 @@ class qpOASES_Solver
         double_t equality_constraints_tolerance_ = 1e-12;
 
         //Overload this method in a child class to change the configuration.
-        virtual void _config_solver();
+        void _config_solver();
 
         //https://github.com/SmartArmStack/sas_conversions/blob/master/src/eigen3_std_conversions.cpp
         //A copy from sas
@@ -70,5 +70,8 @@ class qpOASES_Solver
          * @return the optimal x
          */
         VectorXd solve_quadratic_program(const MatrixXd& H, const VectorXd& f, const MatrixXd& A, const VectorXd& b, const MatrixXd& Aeq, const VectorXd& beq);
+
+        VectorXd test_vectorxd(const VectorXd& v);
+        MatrixXd test_matrixxd(const MatrixXd& m);
 
 };

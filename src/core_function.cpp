@@ -2,7 +2,7 @@
 Based on https://github.com/dqrobotics/cpp-interface-qpoases
 Originally by Murilo M. Marinho
 */
-#pragma once
+#include <qpOASES_Solver.h>
 
 #include <vector>
 #include <Eigen/Dense>
@@ -11,7 +11,7 @@ using namespace Eigen;
 #include <qpOASES.hpp>
 USING_NAMESPACE_QPOASES
 
-virtual void qpOASES_Solver::_config_solver()
+void qpOASES_Solver::_config_solver()
 {
     Options options;
     options.printLevel = qpOASES::PrintLevel::PL_NONE;
@@ -50,6 +50,16 @@ double qpOASES_Solver::get_equality_constraints_tolerance() {
     return equality_constraints_tolerance_;
 }
 
+
+VectorXd qpOASES_Solver::test_vectorxd(const VectorXd& v)
+{
+    return v;
+}
+
+MatrixXd qpOASES_Solver::test_matrixxd(const MatrixXd& m)
+{
+    return m;
+}
 
 VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const VectorXd& f, const MatrixXd& A, const VectorXd& b, const MatrixXd& Aeq, const VectorXd& beq)
 {
@@ -137,6 +147,4 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
     std::vector<double> return_value_std(xOpt, xOpt + PROBLEM_SIZE);
 
     return _std_vector_double_to_vectorxd(return_value_std);
-}
-
 }

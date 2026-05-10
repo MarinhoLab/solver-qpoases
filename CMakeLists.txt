@@ -16,6 +16,7 @@ set(PYBIND11_FINDPYTHON ON)
 add_subdirectory(pybind11)
 pybind11_add_module(_core MODULE
         src/core.cpp
+        src/core_function.cpp
     )
 
 target_include_directories(_core PRIVATE
@@ -33,10 +34,6 @@ set(QPOASES_BUILD_EXAMPLES FALSE)
 add_subdirectory(qpOASES)
 
 target_link_libraries(_core PRIVATE Eigen3::Eigen qpOASES)
-install(TARGETS qpOASES
-DESTINATION
-marinholab/solvers/qpoases
-ARCHIVE)
 # Version is dynamically obtained. See pyproject.toml
 # Activating this causes issues with Windows compilation.
 # target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})

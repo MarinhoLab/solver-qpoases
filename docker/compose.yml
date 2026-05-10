@@ -8,6 +8,4 @@ services:
     command: /bin/bash -c "
       cd /root/solver-qpoases
       && pip install . --break-system-packages
-      && tree .
-      && cd ..
       && qpoases_example"
