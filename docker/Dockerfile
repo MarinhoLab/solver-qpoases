@@ -4,4 +4,5 @@ SHELL ["/bin/bash", "-c"]
 ENV BASH_ENV="/etc/bash_env"
 
 RUN apt-get update
-RUN apt-get install -y python3 python3-pip cmake libeigen3-dev
+RUN apt-get install -y python3 python3-pip cmake libeigen3-dev git
+RUN pip install setuptools-git-versioning --break-system-packages
