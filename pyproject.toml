@@ -9,7 +9,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = 'marinholab-solver-qpoases'
+name = 'marinholab-solvers-qpoases'
 authors = [
     {name = "Murilo M. Marinho", email = "murilomarinho@ieee.org"}
 ]
