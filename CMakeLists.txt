@@ -33,6 +33,10 @@ set(QPOASES_BUILD_EXAMPLES FALSE)
 add_subdirectory(qpOASES)
 
 target_link_libraries(_core PRIVATE Eigen3::Eigen qpOASES)
+install(TARGETS qpOASES
+DESTINATION
+marinholab/solvers/qpoases
+ARCHIVE)
 # Version is dynamically obtained. See pyproject.toml
 # Activating this causes issues with Windows compilation.
 # target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})

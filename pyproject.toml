@@ -30,5 +30,8 @@ enabled = true
 dev_template = "{tag}.{ccount}"
 dirty_template = "{tag}.{ccount}"
 
-#[project.scripts]
-#needlemanipulation_example = "marinholab.working.needlemanipulation.example:main"
+[tool.setuptools.package-data]
+mypkg = ["*.a"]
+
+[project.scripts]
+qpoases_example = "marinholab.solvers.qpoases.example:main"
