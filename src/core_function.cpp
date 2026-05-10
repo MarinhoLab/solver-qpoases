@@ -2,7 +2,7 @@
 Based on https://github.com/dqrobotics/cpp-interface-qpoases
 Originally by Murilo M. Marinho
 */
-#include <qpOASES_Solver.h>
+#include <qpOASES_solver.h>
 
 void qpOASES_Solver::_config_solver()
 {
