@@ -14,10 +14,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        python-version: ['3.13']
-
-    permissions:
-      id-token: write
+        python-version: ['3.12','3.13']
 
     steps:
       - uses: actions/checkout@v3
@@ -50,5 +47,22 @@ jobs:
           rename 's/linux/manylinux2014/' *
           cd ..
           cd ..
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian-packages-${{ matrix.os }}-${{ matrix.python-version }}
+          path: dist/
+
+
+  upload:
+      needs: build
+      runs-on: ubuntu-latest
+      permissions:
+        id-token: write
+      steps:
+        - uses: actions/download-artifact@v4 # Download all artifacts
+          with:
+            path: dist/
+            merge-multiple: true
+        - name: Publish package distributions to PyPI
+          uses: pypa/gh-action-pypi-publish@release/v1
