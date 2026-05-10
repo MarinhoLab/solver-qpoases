@@ -23,9 +23,13 @@ target_include_directories(_core PRIVATE
     qpOASES/include
     )
 
+# https://stackoverflow.com/questions/38296756/what-is-the-idiomatic-way-in-cmake-to-add-the-fpic-compiler-option
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # CMAKE was not passing BUILD_SHARED_LIBS nicely to the add_subdirectory.
 # https://thatonegamedev.com/cpp/cmake/how-to-manage-dependencies-with-cmake/
 set(BUILD_SHARED_LIBS FALSE CACHE BOOL "x" FORCE)
+# See subdirectory for the flag below
+set(QPOASES_BUILD_EXAMPLES FALSE)
 add_subdirectory(qpOASES)
 
 target_link_libraries(_core PRIVATE Eigen3::Eigen qpOASES)

@@ -18,8 +18,7 @@ class qpOASES_Solver
         int_t maximum_working_set_recalculations_;
 
         // Equality constraints are handled by means of appended inequality constraints within an equality tolerance threshold.
-        // Initialized to DQ_threshold by default
-        double_t equality_constraints_tolerance_ = DQ_threshold;
+        double_t equality_constraints_tolerance_ = 1e-12;
 
         //Overload this method in a child class to change the configuration.
         virtual void _config_solver();
@@ -72,4 +71,4 @@ class qpOASES_Solver
          */
         VectorXd solve_quadratic_program(const MatrixXd& H, const VectorXd& f, const MatrixXd& A, const VectorXd& b, const MatrixXd& Aeq, const VectorXd& beq);
 
-}
+};

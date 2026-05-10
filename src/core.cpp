@@ -17,24 +17,10 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(_core, m) {
 
-    m.doc() = R"coredoc(
-        marinholab.solvers.qpoases
-        -------------------------------------
+    py::class_<qpOASES_Solver> qpoases_solver(m, "qpOASES_Solver");
 
-        .. currentmodule:: qpoases
-
-        .. autosummary::
-           :toctree: _generate
-
-           qpOASES_Solver
-    )coredoc";
-
-    py::class_<
-        qpOASES_Solver,
-        > qpoases_solver(m, "qpOASES_Solver");
-
-    qpoases_solver.def(py::init<>())
-    qpoases_solver.def("solve_quadratic_program",qpOASES_Solver::solve_quadratic_program,".");
+    qpoases_solver.def(py::init<>());
+    qpoases_solver.def("solve_quadratic_program",&qpOASES_Solver::solve_quadratic_program,".");
 
 #ifdef VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);

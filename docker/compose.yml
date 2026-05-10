@@ -1,0 +1,10 @@
+services:
+  solver_qpoases:
+    build: .
+    environment:
+      - TIMEOUT=20
+    volumes:
+      - ../../solver-qpoases:/root/solver-qpoases
+    command: /bin/bash -c "
+      cd /root/solver-qpoases
+      && pip install . --break-system-packages"
