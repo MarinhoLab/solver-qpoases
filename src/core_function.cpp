@@ -4,13 +4,6 @@ Originally by Murilo M. Marinho
 */
 #include <qpOASES_Solver.h>
 
-#include <vector>
-#include <Eigen/Dense>
-using namespace Eigen;
-
-#include <qpOASES.hpp>
-USING_NAMESPACE_QPOASES
-
 void qpOASES_Solver::_config_solver()
 {
     Options options;
