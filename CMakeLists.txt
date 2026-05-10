@@ -20,7 +20,7 @@ pybind11_add_module(_core MODULE
     )
 
 target_include_directories(_core PRIVATE
-    include
+    ${PROJECT_SOURCE_DIR}/include
     qpOASES/include
     )
 
