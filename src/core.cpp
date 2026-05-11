@@ -21,6 +21,10 @@ PYBIND11_MODULE(_core, m) {
 
     qpoases_solver.def(py::init<>());
     qpoases_solver.def("solve_quadratic_program",&qpOASES_Solver::solve_quadratic_program,".");
+
+
+
+    // Helps evaluating the wrapper when versions show any issues
     qpoases_solver.def("test_vectorxd",&qpOASES_Solver::test_vectorxd,".");
     qpoases_solver.def("test_matrixxd",&qpOASES_Solver::test_matrixxd,".");
 

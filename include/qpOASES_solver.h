@@ -32,10 +32,7 @@ class qpOASES_Solver
 
 
     public:
-        qpOASES_Solver():
-            qpoases_solve_first_time_(true)
-        {
-        }
+        qpOASES_Solver();
         ~qpOASES_Solver()=default;
 
         void set_maximum_working_set_recalculations(const int& maximum_working_set_recalculations);
