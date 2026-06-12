@@ -14,15 +14,19 @@
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
 namespace py = pybind11;
+using namespace M3;
 
 PYBIND11_MODULE(_core, m) {
 
     py::class_<qpOASES_Solver> qpoases_solver(m, "qpOASES_Solver");
+    py::class_<qpOASES_Solver::Configuration> qpoases_configuration(qpoases_solver, "Configuration");
+    qpoases_configuration.def(py::init<>());
+    qpoases_configuration.def_readwrite("maximum_working_set_recalculations", &qpOASES_Solver::Configuration::maximum_working_set_recalculations);
+    // qpoases_configuration.def_readwrite("hessian_type", &qpOASES_Solver::Configuration::hessian_type);
 
-    qpoases_solver.def(py::init<>());
+    qpoases_solver.def(py::init<const qpOASES_Solver::Configuration&>(),
+                       py::arg("configuration") = qpOASES_Solver::Configuration());
     qpoases_solver.def("solve_quadratic_program",&qpOASES_Solver::solve_quadratic_program,".");
-
-
 
     // Helps evaluating the wrapper when versions show any issues
     qpoases_solver.def("test_vectorxd",&qpOASES_Solver::test_vectorxd,".");

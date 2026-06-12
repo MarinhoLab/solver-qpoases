@@ -4,9 +4,15 @@ Originally by Murilo M. Marinho
 */
 #include <qpOASES_solver.h>
 
-qpOASES_Solver::qpOASES_Solver():
+namespace M3
+{
+
+// https://stackoverflow.com/questions/53408962/try-to-understand-compiler-error-message-default-member-initializer-required-be
+qpOASES_Solver::Configuration::Configuration() = default;
+
+qpOASES_Solver::qpOASES_Solver(const Configuration& configuration):
     qpoases_solve_first_time_(true),
-    maximum_working_set_recalculations_(500)
+    configuration_(configuration)
 {
 
 }
@@ -22,19 +28,6 @@ VectorXd qpOASES_Solver::_std_vector_double_to_vectorxd(std::vector<double> std_
     double* ptr = &std_vector_double[0];
     Eigen::Map<Eigen::VectorXd> vec(ptr,std_vector_double.size());
     return vec;
-}
-
-void qpOASES_Solver::set_maximum_working_set_recalculations(const int& maximum_working_set_recalculations)
-{
-    maximum_working_set_recalculations_ = maximum_working_set_recalculations;
-}
-
-void qpOASES_Solver::set_equality_constraints_tolerance(const double &equality_constraints_tolerance) {
-    equality_constraints_tolerance_ = equality_constraints_tolerance;
-}
-
-double qpOASES_Solver::get_equality_constraints_tolerance() {
-    return equality_constraints_tolerance_;
 }
 
 VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const VectorXd& f, const MatrixXd& A, const VectorXd& b, const MatrixXd& Aeq, const VectorXd& beq)
@@ -111,11 +104,12 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
 
     if(qpoases_solve_first_time_)
     {
-        qpoases_problem_ = SQProblem(PROBLEM_SIZE, INEQUALITY_CONSTRAINT_SIZE + EQUALITY_CONSTRAINT_SIZE, HST_POSDEF);
+        qpoases_problem_ = SQProblem(PROBLEM_SIZE, INEQUALITY_CONSTRAINT_SIZE + EQUALITY_CONSTRAINT_SIZE, configuration_.hessian_type);
         Options options;
         options.printLevel = qpOASES::PrintLevel::PL_NONE;
+        options.enableNZCTests = BT_TRUE; //Nonzero curvature test
         qpoases_problem_.setOptions( options );
-        auto maximum_working_set_recalculations_local = maximum_working_set_recalculations_; //qpOASES changes the value, so we make a local copy
+        auto maximum_working_set_recalculations_local = configuration_.maximum_working_set_recalculations; //qpOASES changes the value, so we make a local copy
         auto problem_init_return = qpoases_problem_.init(H_vec,g_vec,A_vec,NULL,NULL,lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
         if(problem_init_return != SUCCESSFUL_RETURN)
             throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): Unable to solve quadratic program.");
@@ -123,7 +117,7 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
     }
     else
     {
-        auto maximum_working_set_recalculations_local = maximum_working_set_recalculations_; //qpOASES changes the value, so we make a local copy
+        auto maximum_working_set_recalculations_local = configuration_.maximum_working_set_recalculations; //qpOASES changes the value, so we make a local copy
         auto problem_init_return = qpoases_problem_.hotstart(H_vec,g_vec,A_vec,NULL,NULL,lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
         if(problem_init_return != SUCCESSFUL_RETURN)
             throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): Unable to solve quadratic program.");
@@ -147,3 +141,5 @@ MatrixXd qpOASES_Solver::test_matrixxd(const MatrixXd& m)
 {
     return m;
 }
+
+} // namespace M3
