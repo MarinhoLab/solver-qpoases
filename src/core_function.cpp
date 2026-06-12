@@ -107,7 +107,7 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
         qpoases_problem_ = SQProblem(PROBLEM_SIZE, INEQUALITY_CONSTRAINT_SIZE + EQUALITY_CONSTRAINT_SIZE, configuration_.hessian_type);
         Options options;
         options.printLevel = qpOASES::PrintLevel::PL_NONE;
-        options.enableNZCTests = BT_TRUE; //Nonzero curvature test
+        options.enableNZCTests = configuration_.enableNZCTests; //Nonzero curvature test
         qpoases_problem_.setOptions( options );
         auto maximum_working_set_recalculations_local = configuration_.maximum_working_set_recalculations; //qpOASES changes the value, so we make a local copy
         auto problem_init_return = qpoases_problem_.init(H_vec,g_vec,A_vec,NULL,NULL,lbA_vec,ubA_vec,maximum_working_set_recalculations_local);

@@ -20,6 +20,7 @@ class qpOASES_Solver
             //Page 14 of https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf
             int_t maximum_working_set_recalculations = 150;
             HessianType hessian_type = HST_POSDEF; //Hessian definiteness. Page 22.
+            bool enableNZCTests = false;
             Configuration(); //https://stackoverflow.com/questions/53408962/try-to-understand-compiler-error-message-default-member-initializer-required-be
         };
     protected:
