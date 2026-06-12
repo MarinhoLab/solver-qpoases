@@ -3,6 +3,7 @@ Based on https://github.com/dqrobotics/cpp-interface-qpoases
 Originally by Murilo M. Marinho
 */
 #include <qpOASES_solver.h>
+//#include <print>
 
 namespace M3
 {
@@ -106,14 +107,25 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
     {
         qpoases_problem_ = SQProblem(PROBLEM_SIZE, INEQUALITY_CONSTRAINT_SIZE + EQUALITY_CONSTRAINT_SIZE, configuration_.hessian_type);
         Options options;
-        options.printLevel = qpOASES::PrintLevel::PL_NONE;
+        options.printLevel = qpOASES::PrintLevel::PL_LOW;
         options.enableNZCTests = configuration_.enableNZCTests; //Nonzero curvature test
         options.enableFlippingBounds = configuration_.enableFlippingBounds; //Flipping bounds
         qpoases_problem_.setOptions( options );
         auto maximum_working_set_recalculations_local = configuration_.maximum_working_set_recalculations; //qpOASES changes the value, so we make a local copy
         auto problem_init_return = qpoases_problem_.init(H_vec,g_vec,A_vec,NULL,NULL,lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
+
         if(problem_init_return != SUCCESSFUL_RETURN)
-            throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): Unable to solve quadratic program.");
+        {
+            if(problem_init_return == RET_MAX_NWSR_REACHED)
+                throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): Maximum number of working set recalculations reached. Consider increasing the 'maximum_working_set_recalculations' parameter in the configuration.");
+            else if( problem_init_return == RET_INIT_FAILED)
+                throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): Initialization failed. Check if the problem is well defined and if the parameters are valid.");
+            else
+            {
+                throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): Unable to solve quadratic program. qpOASES returned error code: " + std::to_string(problem_init_return) + std::string(" ") + std::to_string(getSimpleStatus(problem_init_return)));
+            }
+        }
+
         qpoases_solve_first_time_ = false;
     }
     else

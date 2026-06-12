@@ -19,6 +19,17 @@ using namespace M3;
 PYBIND11_MODULE(_core, m) {
 
     py::class_<qpOASES_Solver> qpoases_solver(m, "qpOASES_Solver");
+
+    py::enum_<BooleanType>(qpoases_solver, "BooleanType")
+    .value("BT_FALSE", BooleanType::BT_FALSE)
+    .value("BT_TRUE", BooleanType::BT_TRUE)
+    .export_values();
+
+    py::enum_<HessianType>(qpoases_solver, "HessianType")
+    .value("HST_POSDEF", HessianType::HST_POSDEF)
+    .value("HST_SEMIDEF", HessianType::HST_SEMIDEF)
+    .export_values();
+
     py::class_<qpOASES_Solver::Configuration> qpoases_configuration(qpoases_solver, "Configuration");
     qpoases_configuration.def(py::init<>());
     qpoases_configuration.def_readwrite("maximum_working_set_recalculations", &qpOASES_Solver::Configuration::maximum_working_set_recalculations);
