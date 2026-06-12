@@ -75,11 +75,19 @@ def semidefinite():
     H = J.T @ J
     f = 1.0 * J.T @ x_tilde
 
+    Wl = -np.eye(4,4)
+    wl = -np.ones(4,)
+    Wu = np.eye(4,4)
+    wu = np.ones(4,)
+
+    W = np.hstack((Wl, Wu))
+    w = np.concatenate((wl, wu))
+
     # No constraints
     u = solver.solve_quadratic_program(H,
                                        f,
-                                       np.array([0.0, 0.0, 0.0, 0.0]).reshape((1, 4)),
-                                       np.array([0.0]),
+                                       W,
+                                       w,
                                        np.array([0.0, 0.0, 0.0, 0.0]).reshape((1, 4)),
                                        np.array([0.0])
                                        )
