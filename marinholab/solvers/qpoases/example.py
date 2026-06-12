@@ -63,7 +63,9 @@ def positivedefinite():
 def semidefinite():
     config = qpOASES_Solver.Configuration()
     config.hessian_type = qpOASES_Solver.HessianType.HST_SEMIDEF
-    config.enableNZCTests = qpOASES_Solver.BooleanType.BT_TRUE
+    config.enableRegularisation = qpOASES_Solver.BooleanType.BT_FALSE
+    #config.enableNZCTests = qpOASES_Solver.BooleanType.BT_TRUE
+    #config.enableFlippingBounds = qpOASES_Solver.BooleanType.BT_TRUE
     solver = qpOASES_Solver(config)
 
     x = np.array([1.0, 0.0, 0.0, 0.0])
@@ -80,7 +82,7 @@ def semidefinite():
     Wu = np.eye(4,4)
     wu = np.ones(4,)
 
-    W = np.hstack((Wl, Wu))
+    W = np.vstack((Wl, Wu))
     w = np.concatenate((wl, wu))
 
     # No constraints
@@ -91,6 +93,7 @@ def semidefinite():
                                        np.array([0.0, 0.0, 0.0, 0.0]).reshape((1, 4)),
                                        np.array([0.0])
                                        )
+    print(u)
 
 def main():
     positivedefinite()
