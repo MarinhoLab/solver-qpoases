@@ -108,6 +108,7 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
         Options options;
         options.printLevel = qpOASES::PrintLevel::PL_NONE;
         options.enableNZCTests = configuration_.enableNZCTests; //Nonzero curvature test
+        options.enableFlippingBounds = configuration_.enableFlippingBounds; //Flipping bounds
         qpoases_problem_.setOptions( options );
         auto maximum_working_set_recalculations_local = configuration_.maximum_working_set_recalculations; //qpOASES changes the value, so we make a local copy
         auto problem_init_return = qpoases_problem_.init(H_vec,g_vec,A_vec,NULL,NULL,lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
