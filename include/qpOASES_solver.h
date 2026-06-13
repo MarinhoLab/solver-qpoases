@@ -19,6 +19,7 @@ class qpOASES_Solver
             //of working set recalculations actually performed!)
             //Page 14 of https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf
             int_t maximum_working_set_recalculations = 150;
+            bool use_hotstart = true; //Use hotstart for subsequent calls.
             HessianType hessian_type = HST_POSDEF; //Hessian definiteness. Page 22.
             BooleanType enableRegularisation = BT_TRUE; //Regularisation. Page 26.
             BooleanType enableNZCTests = BT_FALSE; //Nonzero curvature test. Page 22.

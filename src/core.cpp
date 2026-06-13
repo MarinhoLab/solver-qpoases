@@ -33,6 +33,7 @@ PYBIND11_MODULE(_core, m) {
     py::class_<qpOASES_Solver::Configuration> qpoases_configuration(qpoases_solver, "Configuration");
     qpoases_configuration.def(py::init<>());
     qpoases_configuration.def_readwrite("maximum_working_set_recalculations", &qpOASES_Solver::Configuration::maximum_working_set_recalculations);
+    qpoases_configuration.def_readwrite("use_hotstart", &qpOASES_Solver::Configuration::use_hotstart);
     qpoases_configuration.def_readwrite("hessian_type", &qpOASES_Solver::Configuration::hessian_type);
     qpoases_configuration.def_readwrite("enableRegularisation", &qpOASES_Solver::Configuration::enableRegularisation);
     qpoases_configuration.def_readwrite("enableNZCTests", &qpOASES_Solver::Configuration::enableNZCTests);
