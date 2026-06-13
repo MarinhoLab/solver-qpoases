@@ -14,10 +14,10 @@ class Solver:
             raise ValueError(f"Aeq={Aeq} and beq={beq} must both be None or both not None.")
 
         if A is None:
-            A = np.zeros_like(f)
+            A = np.zeros_like(f.T)
             b = np.zeros((1,))
         if Aeq is None:
-            Aeq = np.zeros_like(f)
+            Aeq = np.zeros_like(f.T)
             beq = np.zeros((1,))
 
         return self.solver.solve_quadratic_program(H, f, A, b, Aeq, beq)
