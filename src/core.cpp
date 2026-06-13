@@ -28,6 +28,7 @@ PYBIND11_MODULE(_core, m) {
     py::enum_<HessianType>(qpoases_solver, "HessianType")
     .value("HST_POSDEF", HessianType::HST_POSDEF)
     .value("HST_SEMIDEF", HessianType::HST_SEMIDEF)
+    .value("HST_IDENTITY", HessianType::HST_IDENTITY)
     .export_values();
 
     py::class_<qpOASES_Solver::Configuration> qpoases_configuration(qpoases_solver, "Configuration");
