@@ -3,10 +3,10 @@ Copyright (C) 2025 Murilo Marques Marinho (www.murilomarinho.info)
 LGPLv3 License
 """
 import numpy as np
-from marinholab.solvers.qpoases import qpOASES_Solver
+from marinholab.solvers import qpoases
 
 def positivedefinite():
-    solver = qpOASES_Solver()
+    solver = qpoases.Solver()
 
     x = np.array([1.0, 0.0, 0.0, 0.0])
     xd = np.array([0.0, 0.0, 0.0, 1.0])
@@ -61,12 +61,12 @@ def positivedefinite():
     print(u_both)
 
 def semidefinite():
-    config = qpOASES_Solver.Configuration()
-    config.hessian_type = qpOASES_Solver.HessianType.HST_SEMIDEF
-    config.enableRegularisation = qpOASES_Solver.BooleanType.BT_FALSE
+    config = qpoases.Configuration()
+    config.hessian_type = qpoases.HessianType.HST_SEMIDEF
+    config.enableRegularisation = qpoases.BooleanType.BT_FALSE
     #config.enableNZCTests = qpOASES_Solver.BooleanType.BT_TRUE
     #config.enableFlippingBounds = qpOASES_Solver.BooleanType.BT_TRUE
-    solver = qpOASES_Solver(config)
+    solver = qpoases.Solver(config)
 
     x = np.array([1.0, 0.0, 0.0, 0.0])
     xd = np.array([0.0, 0.0, 1.0, 0.0])
