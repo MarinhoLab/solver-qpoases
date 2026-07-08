@@ -39,6 +39,7 @@ PYBIND11_MODULE(_core, m) {
     qpoases_configuration.def_readwrite("enableRegularisation", &qpOASES_Solver::Configuration::enableRegularisation);
     qpoases_configuration.def_readwrite("enableNZCTests", &qpOASES_Solver::Configuration::enableNZCTests);
     qpoases_configuration.def_readwrite("enableFlippingBounds", &qpOASES_Solver::Configuration::enableFlippingBounds);
+    qpoases_configuration.def_readwrite("termination_tolerance", &qpOASES_Solver::Configuration::termination_tolerance);
 
     qpoases_solver.def(py::init<const qpOASES_Solver::Configuration&>(),
                        py::arg("configuration") = qpOASES_Solver::Configuration());

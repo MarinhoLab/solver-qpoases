@@ -24,6 +24,7 @@ class qpOASES_Solver
             BooleanType enableRegularisation = BT_TRUE; //Regularisation. Page 26.
             BooleanType enableNZCTests = BT_FALSE; //Nonzero curvature test. Page 22.
             BooleanType enableFlippingBounds = BT_FALSE; //Flipping bounds. Page 22.
+            real_t termination_tolerance = 5.0e6 * EPS; //Relative termination tolerance to stop homotopy.
             Configuration(); //https://stackoverflow.com/questions/53408962/try-to-understand-compiler-error-message-default-member-initializer-required-be
         };
     protected:

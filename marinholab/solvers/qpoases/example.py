@@ -95,6 +95,37 @@ def semidefinite():
                                        )
     print(u)
 
+def termination_tolerance():
+    # The termination tolerance is the relative tolerance used by qpOASES to
+    # decide when the homotopy algorithm has converged. Tightening it (i.e.
+    # using a smaller value) can improve solution accuracy at the cost of
+    # more working set recalculations; loosening it can speed up solves at
+    # the cost of accuracy.
+    config = qpoases.Configuration()
+    config.termination_tolerance = 1.0e-9
+    solver = qpoases.Solver(config)
+
+    x = np.array([1.0, 0.0, 0.0, 0.0])
+    xd = np.array([0.0, 0.0, 0.0, 1.0])
+
+    x_tilde = (x - xd).reshape((4, 1))
+
+    J = np.eye(4)
+    H = J.T @ J
+    f = 1.0 * J.T @ x_tilde
+
+    A = np.array([x[0], x[1], x[2], x[3]]).reshape((1, 4))
+    b = np.array([0.0]).reshape((1, 1))
+
+    u = solver.solve_quadratic_program(H,
+                                       f,
+                                       A,
+                                       b,
+                                       np.array([0.0, 0.0, 0.0, 0.0]).reshape((1, 4)),
+                                       np.array([0.0])
+                                       )
+    print(u)
+
 def nones():
     solver = qpoases.Solver()
 
@@ -140,6 +171,7 @@ def nones():
 def main():
     positivedefinite()
     semidefinite()
+    termination_tolerance()
     nones()
 
 
