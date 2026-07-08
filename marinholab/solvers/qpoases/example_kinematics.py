@@ -109,7 +109,7 @@ def main():
         # subject to the joint-velocity constraints only.
         H1 = Jt.T @ Jt
         f1 = gain * (Jt.T @ e)
-        u1 = np.asarray(solver_1.solve_quadratic_program(H1, f1, A, b, None, None))
+        u1 = solver_1.solve_quadratic_program(H1, f1, A, b, None, None)
 
         # Level 2 minimizes the joint-velocity norm, restricted to the null
         # space of Jt so that it cannot affect (degrade) the level-1 result.
@@ -117,7 +117,7 @@ def main():
         f2 = np.zeros(n)
         Aeq = Jt
         beq = Jt @ u1
-        u2 = np.asarray(solver_2.solve_quadratic_program(H2, f2, A, b, Aeq, beq))
+        u2 = solver_2.solve_quadratic_program(H2, f2, A, b, Aeq, beq)
 
         # Store the norms of both levels' solutions so that their evolution
         # over the control loop can be plotted at the end.
