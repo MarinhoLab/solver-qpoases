@@ -168,11 +168,41 @@ def nones():
                                             None
                                             )
 
+def active_set():
+    # get_active_set() reports, for each row of the combined constraint matrix
+    # (rows of A followed by rows of Aeq), whether it is inactive (0), active at
+    # its lower bound (-1), or active at its upper bound (+1). Equality
+    # constraints are always reported as active (+1), since their lower and
+    # upper bounds coincide.
+    solver = qpoases.Solver()
+
+    H = np.eye(2)
+    f = np.array([-1.0, -1.0])  # unconstrained optimum would be x = [1, 1]
+
+    # This inequality constraint is tight at the optimum: x[0] <= 0.2
+    A = np.array([1.0, 0.0]).reshape((1, 2))
+    b = np.array([0.2])
+
+    # This inequality constraint is loose at the optimum: x[1] <= 5.0
+    A = np.vstack((A, np.array([0.0, 1.0])))
+    b = np.concatenate((b, np.array([5.0])))
+
+    u = solver.solve_quadratic_program(H,
+                                       f,
+                                       A,
+                                       b,
+                                       np.array([0.0, 0.0]).reshape((1, 2)),
+                                       np.array([0.0])
+                                       )
+    print(u)
+    print(solver.get_active_set())  # expected [1, 0, 0]: first constraint active at its upper bound
+
 def main():
     positivedefinite()
     semidefinite()
     termination_tolerance()
     nones()
+    active_set()
 
 
 if __name__ == "__main__":
