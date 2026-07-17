@@ -44,6 +44,8 @@ PYBIND11_MODULE(_core, m) {
     qpoases_solver.def(py::init<const qpOASES_Solver::Configuration&>(),
                        py::arg("configuration") = qpOASES_Solver::Configuration());
     qpoases_solver.def("solve_quadratic_program",&qpOASES_Solver::solve_quadratic_program,".");
+    qpoases_solver.def("get_active_set",&qpOASES_Solver::get_active_set,
+                        "Returns the active set of constraints obtained in the most recent call to solve_quadratic_program().");
 
     // Helps evaluating the wrapper when versions show any issues
     qpoases_solver.def("test_vectorxd",&qpOASES_Solver::test_vectorxd,".");

@@ -155,6 +155,21 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
     return _std_vector_double_to_vectorxd(return_value_std);
 }
 
+VectorXd qpOASES_Solver::get_active_set()
+{
+    if(qpoases_solve_first_time_)
+        throw std::runtime_error("qpOASES_Solver::get_active_set(): solve_quadratic_program() must be called at least once before the active set can be retrieved.");
+
+    const int_t NC = qpoases_problem_.getNC();
+    if(NC == 0)
+        return VectorXd(0);
+
+    std::vector<double> active_set_std(NC, 0.0);
+    evaluate_problem_return_value(qpoases_problem_.getWorkingSetConstraints(&active_set_std[0]));
+
+    return _std_vector_double_to_vectorxd(active_set_std);
+}
+
 // Helper functions to help evaluate the wrapper when needed.
 VectorXd qpOASES_Solver::test_vectorxd(const VectorXd& v)
 {

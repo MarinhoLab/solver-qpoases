@@ -61,6 +61,20 @@ class qpOASES_Solver
          */
         VectorXd solve_quadratic_program(const MatrixXd& H, const VectorXd& f, const MatrixXd& A, const VectorXd& b, const MatrixXd& Aeq, const VectorXd& beq);
 
+        /**
+         * @brief
+         *   Returns the active set of constraints obtained in the most recent call to
+         *   solve_quadratic_program(). The returned vector has one entry for each row of
+         *   the combined constraint matrix, i.e. the rows of A followed by the rows of Aeq,
+         *   in that same order, with the following meaning for each entry:
+         *     -1: the constraint is active at its lower bound;
+         *      0: the constraint is inactive;
+         *     +1: the constraint is active at its upper bound (this is also the value used
+         *         for active equality constraints, as their lower and upper bounds coincide).
+         * @return the active set, as described above.
+         */
+        VectorXd get_active_set();
+
         VectorXd test_vectorxd(const VectorXd& v);
         MatrixXd test_matrixxd(const MatrixXd& m);
 
