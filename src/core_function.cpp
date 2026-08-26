@@ -147,12 +147,12 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
         evaluate_problem_return_value(problem_return_value);
     }
 
-    real_t xOpt[PROBLEM_SIZE];
-    qpoases_problem_.getPrimalSolution( xOpt );
+    // Use a std::vector instead of a variable-length array so that the code
+    // compiles with MSVC (VLAs are a non-standard extension rejected by it).
+    std::vector<real_t> xOpt(PROBLEM_SIZE);
+    qpoases_problem_.getPrimalSolution( xOpt.data() );
 
-    std::vector<double> return_value_std(xOpt, xOpt + PROBLEM_SIZE);
-
-    return _std_vector_double_to_vectorxd(return_value_std);
+    return _std_vector_double_to_vectorxd(std::vector<double>(xOpt.begin(), xOpt.end()));
 }
 
 VectorXd qpOASES_Solver::get_active_set()
