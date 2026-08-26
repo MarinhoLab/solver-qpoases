@@ -47,11 +47,10 @@ jobs:
           cd ~
       - name: build
         run: |
-          ls -R
           python -m pip config set global.break-system-packages true
           python -m pip install --upgrade pip
-          python -m pip install setuptools wheel setuptools-git-versioning
-          python setup.py bdist_wheel
+          python -m pip install build
+          python -m build --wheel
       - name: Rename wheel (Ubuntu Only)
         if: startsWith(matrix.os,'ubuntu')
         run: |
