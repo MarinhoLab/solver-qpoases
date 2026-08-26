@@ -18,13 +18,13 @@ jobs:
         python-version: ['3.12','3.13']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: init submodules
         run: |
           git submodule update --init --recursive
           git fetch --prune --unshallow
       - name: Set up Python ${{ matrix.python-version }} (Github Hosted VMs)
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: configure (Ubuntu)
@@ -61,7 +61,7 @@ jobs:
           cd ..
           cd ..
       - name: Upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheel-${{ runner.os }}-py${{ matrix.python-version }}
           path: dist/
@@ -76,7 +76,7 @@ jobs:
       permissions:
         id-token: write
       steps:
-        - uses: actions/download-artifact@v4 # Download all artifacts
+        - uses: actions/download-artifact@v8 # Download all artifacts
           with:
             pattern: wheel-*
             path: dist/
