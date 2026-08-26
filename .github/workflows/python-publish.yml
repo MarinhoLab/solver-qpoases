@@ -12,8 +12,9 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: ['ubuntu-latest','ubuntu-24.04-arm']
+        os: ['ubuntu-latest','ubuntu-24.04-arm','windows-latest','macos-latest']
         python-version: ['3.12','3.13']
 
     steps:
@@ -31,6 +32,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
+      - name: configure (macOS)
+        if: startsWith(matrix.os,'macos')
+        run: |
+          brew install eigen
+      - name: configure (Windows)
+        if: startsWith(matrix.os,'windows')
+        run: |
+          cd C:\vcpkg
+          .\bootstrap-vcpkg.bat
+          vcpkg integrate install
+          vcpkg install eigen3:x64-windows
+          cmd /c mklink /d c:\Tools\vcpkg c:\vcpkg 2>$null || true
+          cd ~
       - name: build
         run: |
           ls -R
@@ -50,18 +64,22 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: debian-packages-${{ matrix.os }}-${{ matrix.python-version }}
+          name: wheel-${{ runner.os }}-py${{ matrix.python-version }}
           path: dist/
 
 
   upload:
       needs: build
       runs-on: ubuntu-latest
+      # Only publish on pushes to main so that PRs and manual dispatches
+      # don't trigger uploads to PyPI.
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       permissions:
         id-token: write
       steps:
         - uses: actions/download-artifact@v4 # Download all artifacts
           with:
+            pattern: wheel-*
             path: dist/
             merge-multiple: true
         - name: Publish package distributions to PyPI

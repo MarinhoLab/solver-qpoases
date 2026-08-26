@@ -2,13 +2,18 @@
 
 #include <vector>
 #include <Eigen/Dense>
-using namespace Eigen;
 
 #include <qpOASES.hpp>
-USING_NAMESPACE_QPOASES
 
 namespace M3
 {
+// Keep the using-directives scoped to this namespace rather than global
+// scope: a global `using namespace Eigen;` would be active while
+// <qpOASES.hpp> is parsed, making `friend class SparseMatrix;` in
+// qpOASES/Indexlist.hpp ambiguous with the Eigen::SparseMatrix template
+// (MSVC rejects this with error C2990).
+using namespace Eigen;
+using namespace qpOASES;
 
 class qpOASES_Solver
 {
