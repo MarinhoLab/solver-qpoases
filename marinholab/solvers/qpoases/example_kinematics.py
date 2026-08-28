@@ -20,8 +20,8 @@ which is a dependency of this project. Install them, e.g. with:
 try:
     import matplotlib.pyplot as plt
     import numpy as np
-    from dqrobotics import i_, translation, vec4
-    from dqrobotics.robots import KukaLw4Robot
+    from dqrobotics import i_, translation, vec4  # type: ignore[reportAttributeAccessIssue]
+    from dqrobotics.robots import KukaLw4Robot  # type: ignore[reportAttributeAccessIssue]
     import dqrobotics_extensions.pyplot as dqp
 except ImportError as e:
     raise ImportError(
@@ -136,11 +136,11 @@ def main():
     ax = plt.axes(projection='3d')
     ax.set_xlabel('$x$')
     ax.set_ylabel('$y$')
-    ax.set_zlabel('$z$')
+    ax.set_zlabel('$z$')  # type: ignore[reportAttributeAccessIssue]
     plot_size = 1.0
     ax.set_xlim((-plot_size, plot_size))
     ax.set_ylim((-plot_size, plot_size))
-    ax.set_zlim((0.0, plot_size))
+    ax.set_zlim((0.0, plot_size))  # type: ignore[reportAttributeAccessIssue]
 
     dqp.plot(robot, q=stored_qs[0], line_color='b', cylinder_color='b', cylinder_alpha=0.15)
     dqp.plot(robot, q=stored_qs[-1], line_color='r')

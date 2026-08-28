@@ -11,6 +11,53 @@ namespace M3
 // https://stackoverflow.com/questions/53408962/try-to-understand-compiler-error-message-default-member-initializer-required-be
 qpOASES_Solver::Configuration::Configuration() = default;
 
+/**
+ * \brief Builds a qpOASES `Options` object from the user configuration.
+ *
+ * Maps every qpOASES `Options` field onto the corresponding `Configuration`
+ * member.
+ */
+Options qpOASES_Solver::_to_qpoases_options() const
+{
+    Options options;
+    options.printLevel = configuration_.print_level;
+    options.enableRamping = configuration_.enable_ramping;
+    options.enableFarBounds = configuration_.enable_far_bounds;
+    options.enableFlippingBounds = configuration_.enableFlippingBounds;
+    options.enableRegularisation = configuration_.enableRegularisation;
+    options.enableFullLITests = configuration_.enable_full_li_tests;
+    options.enableNZCTests = configuration_.enableNZCTests;
+    options.enableDriftCorrection = configuration_.enable_drift_correction;
+    options.enableCholeskyRefactorisation = configuration_.enable_cholesky_refactorisation;
+    options.enableEqualities = configuration_.enable_equalities;
+    options.terminationTolerance = configuration_.termination_tolerance;
+    options.boundTolerance = configuration_.bound_tolerance;
+    options.boundRelaxation = configuration_.bound_relaxation;
+    options.epsNum = configuration_.eps_num;
+    options.epsDen = configuration_.eps_den;
+    options.maxPrimalJump = configuration_.max_primal_jump;
+    options.maxDualJump = configuration_.max_dual_jump;
+    options.initialRamping = configuration_.initial_ramping;
+    options.finalRamping = configuration_.final_ramping;
+    options.initialFarBounds = configuration_.initial_far_bounds;
+    options.growFarBounds = configuration_.grow_far_bounds;
+    options.initialStatusBounds = configuration_.initial_status_bounds;
+    options.epsFlipping = configuration_.eps_flipping;
+    options.numRegularisationSteps = configuration_.num_regularisation_steps;
+    options.epsRegularisation = configuration_.eps_regularisation;
+    options.numRefinementSteps = configuration_.num_refinement_steps;
+    options.epsIterRef = configuration_.eps_iter_ref;
+    options.epsLITests = configuration_.eps_li_tests;
+    options.epsNZCTests = configuration_.eps_nzc_tests;
+    options.rcondSMin = configuration_.rcond_s_min;
+    options.enableInertiaCorrection = configuration_.enable_inertia_correction;
+    options.enableDropInfeasibles = configuration_.enable_drop_infeasibles;
+    options.dropBoundPriority = configuration_.drop_bound_priority;
+    options.dropEqConPriority = configuration_.drop_eq_con_priority;
+    options.dropIneqConPriority = configuration_.drop_ineq_con_priority;
+    return options;
+}
+
 qpOASES_Solver::qpOASES_Solver(const Configuration& configuration):
     qpoases_solve_first_time_(true),
     configuration_(configuration)
@@ -121,12 +168,7 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
     if(qpoases_solve_first_time_)
     {
         qpoases_problem_ = SQProblem(PROBLEM_SIZE, INEQUALITY_CONSTRAINT_SIZE + EQUALITY_CONSTRAINT_SIZE, configuration_.hessian_type);
-        Options options;
-        options.printLevel = qpOASES::PrintLevel::PL_LOW;
-        options.enableNZCTests = configuration_.enableNZCTests; //Nonzero curvature test
-        options.enableFlippingBounds = configuration_.enableFlippingBounds; //Flipping bounds
-        options.terminationTolerance = configuration_.termination_tolerance; //Relative termination tolerance to stop homotopy
-        qpoases_problem_.setOptions( options );
+        qpoases_problem_.setOptions(_to_qpoases_options());
         auto maximum_working_set_recalculations_local = configuration_.maximum_working_set_recalculations; //qpOASES changes the value, so we make a local copy
         auto problem_init_return = qpoases_problem_.init(H_vec,g_vec,A_vec,NULL,NULL,lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
 

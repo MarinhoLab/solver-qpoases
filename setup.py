@@ -137,6 +137,9 @@ setup(
     packages=[
         "marinholab.solvers.qpoases",
     ],
+    package_data={
+        "marinholab.solvers.qpoases": ["_core.pyi", "py.typed"],
+    },
     ext_modules=[CMakeExtension('marinholab.solvers.qpoases._core')],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
