@@ -38,17 +38,9 @@ class qpOASES_Solver
         /**
          * @brief Holds all user-configurable solver options.
          *
-         * Every qpOASES `Options` field is exposed here. Defaults are chosen
-         * to match qpOASES' own defaults for a double-precision build (see
-         * `Options::setToDefault()`), with three deliberate exceptions:
-         *
-         *   - enableNZCTests defaults to BT_FALSE (qpOASES default is
-         *     BT_TRUE) and enableFlippingBounds defaults to BT_FALSE
-         *     (qpOASES default is BT_TRUE). These are the settings used by
-         *     qpOASES' "fast"/MPC preset and are the recommended settings
-         *     for online, embedded use.
-         *   - print_level defaults to PL_LOW (qpOASES default is PL_MEDIUM)
-         *     so the wrapper stays quiet by default.
+         * Every qpOASES `Options` field is exposed here. Defaults match
+         * qpOASES' own defaults for a double-precision build (see
+         * `Options::setToDefault()`).
          *
          * @note qpOASES applies `Options::ensureConsistency()` when it sets
          *       its options, which will silently adjust any value that falls
@@ -85,12 +77,9 @@ class qpOASES_Solver
 
             /**
              * @brief Verbose-ness of qpOASES output.
-             *
-             * Defaults to PL_LOW so the solver stays quiet, matching this
-             * wrapper's historical behaviour.
              * @see `Options::printLevel`
              */
-            PrintLevel print_level = PL_LOW;
+            PrintLevel print_level = PL_MEDIUM;
 
             /**
              * @brief Whether the ramping strategy shall be used.
@@ -109,7 +98,7 @@ class qpOASES_Solver
              *        values.
              * @see `Options::enableFlippingBounds`. Page 22 of the manual.
              */
-            BooleanType enableFlippingBounds = BT_FALSE;
+            BooleanType enableFlippingBounds = BT_TRUE;
 
             /**
              * @brief Whether the Hessian shall be regularised in case
@@ -133,7 +122,7 @@ class qpOASES_Solver
              * @brief Whether nonzero curvature tests shall be used.
              * @see `Options::enableNZCTests`. Page 22 of the manual.
              */
-            BooleanType enableNZCTests = BT_FALSE;
+            BooleanType enableNZCTests = BT_TRUE;
 
             /**
              * @brief Frequency of drift corrections (0 = off).

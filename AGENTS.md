@@ -73,23 +73,22 @@ Configuration lives in `pyrightconfig.json` (`pythonVersion` 3.9,
 
 ## Conventions
 
-- **Preserve prior solver behaviour.** The wrapper's historical defaults are
-  the behavioural contract. In particular:
-  - `Configuration.enableRegularisation` defaults to `BT_FALSE`
-    (qpOASES' own default is `BT_TRUE`) — do not "fix" it to `BT_TRUE` without
-    re-validating the semi-definite / indefinite examples.
-  - `Configuration.print_level` defaults to `PL_LOW` (qpOASES default is
-    `PL_MEDIUM`) so the solver is quiet by default.
-  - `Configuration.enableNZCTests` and `enableFlippingBounds` default to
-    `BT_FALSE` (qpOASES default is `BT_TRUE`) — the "fast"/MPC preset.
-  - `Solver` accepts `None` for `A`/`b`/`Aeq`/`beq` and substitutes a single
-    trivially-satisfied zero row; `Solver.get_active_set()` returns one entry
-    per combined constraint row (-1 lower / 0 inactive / +1 upper).
-- **Style.** Match the existing style: no trailing-whitespace obsession,
-  docstrings on public API, snake_case for new `Configuration` fields that
-  map to qpOASES `Options` fields (keep qpOASES-native names where they are
-  already the established wrapper spelling: `enableFlippingBounds`,
-  `enableRegularisation`, `enableNZCTests`).
+- **Defaults match qpOASES.** `Configuration` defaults mirror qpOASES'
+  own `Options::setToDefault()` for a double-precision build (see the
+  defaults table in `README.md`). Do not silently override them here; if a
+  particular problem needs a non-default option, set it on the
+  `Configuration` in the *caller* (e.g. `example.py:semidefinite()` sets
+  `hessian_type = HST_SEMIDEF` because its Hessian is rank-deficient).
+  Re-validate the `example.py` and `example_kinematics.py` solves after any
+  change to a default.
+- **`Solver` API.** `Solver.solve_quadratic_program()` accepts `None` for
+  `A`/`b`/`Aeq`/`beq` and substitutes a single trivially-satisfied zero row;
+  `Solver.get_active_set()` returns one entry per combined constraint row
+  (-1 lower / 0 inactive / +1 upper).
+- **Style.** Match the existing style: docstrings on the public API,
+  snake_case for `Configuration` fields that map to qpOASES `Options` fields
+  (keep qpOASES-native names where they are already the established wrapper
+  spelling: `enableFlippingBounds`, `enableRegularisation`, `enableNZCTests`).
 - **Doxygen.** C++ types and members are documented with Doxygen
   (`/** ... @brief ... @see ... */` blocks). Keep that when adding fields.
 - **Annotations.** All public Python API is fully type-annotated and must
