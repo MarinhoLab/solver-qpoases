@@ -5,7 +5,7 @@ LGPLv3 License
 import numpy as np
 from marinholab.solvers import qpoases
 
-def positivedefinite():
+def positivedefinite() -> None:
     solver = qpoases.Solver()
 
     x = np.array([1.0, 0.0, 0.0, 0.0])
@@ -60,7 +60,7 @@ def positivedefinite():
     print(u_ineq)
     print(u_both)
 
-def semidefinite():
+def semidefinite() -> None:
     config = qpoases.Configuration()
     config.hessian_type = qpoases.HessianType.HST_SEMIDEF
     config.enableRegularisation = qpoases.BooleanType.BT_FALSE
@@ -95,7 +95,7 @@ def semidefinite():
                                        )
     print(u)
 
-def termination_tolerance():
+def termination_tolerance() -> None:
     # The termination tolerance is the relative tolerance used by qpOASES to
     # decide when the homotopy algorithm has converged. Tightening it (i.e.
     # using a smaller value) can improve solution accuracy at the cost of
@@ -126,7 +126,7 @@ def termination_tolerance():
                                        )
     print(u)
 
-def nones():
+def nones() -> None:
     solver = qpoases.Solver()
 
     x = np.array([1.0, 0.0, 0.0, 0.0])
@@ -168,7 +168,7 @@ def nones():
                                             None
                                             )
 
-def active_set():
+def active_set() -> None:
     # get_active_set() reports, for each row of the combined constraint matrix
     # (rows of A followed by rows of Aeq), whether it is inactive (0), active at
     # its lower bound (-1), or active at its upper bound (+1). Equality
@@ -197,7 +197,7 @@ def active_set():
     print(u)
     print(solver.get_active_set())  # expected [1, 0, 0]: first constraint active at its upper bound
 
-def main():
+def main() -> None:
     positivedefinite()
     semidefinite()
     termination_tolerance()
