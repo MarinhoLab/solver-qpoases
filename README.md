@@ -80,7 +80,6 @@ the solver:
 ```python
 config = qpoases.Configuration()
 config.hessian_type = qpoases.HessianType.HST_SEMIDEF   # H is rank-deficient
-config.enableRegularisation = qpoases.BooleanType.BT_FALSE
 config.termination_tolerance = 1.0e-9                    # tighter convergence
 solver = qpoases.Solver(config)
 ```
@@ -111,12 +110,9 @@ The enum types are re-exported for convenience: `qpoases.BooleanType`,
 ### qpOASES options
 
 These map 1:1 onto qpOASES' `Options` fields. Defaults match qpOASES' own
-defaults for a **double-precision** build (see `Options::setToDefault()`), with
-two deliberate exceptions noted inline: `enableNZCTests` and
-`enableFlippingBounds` default to `BT_FALSE` here (qpOASES' default is
-`BT_TRUE`) because those are the recommended "fast"/MPC settings for repeated,
-online solves. See the [qpOASES manual](https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf)
-for a full description of each option.
+defaults for a **double-precision** build (see `Options::setToDefault()`). See
+the [qpOASES manual](https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf) for a
+full description of each option.
 
 **Booleans** (`BooleanType`: `BT_FALSE` / `BT_TRUE`)
 
@@ -124,10 +120,10 @@ for a full description of each option.
 |---|---|---|
 | `enable_ramping` | `BT_TRUE` | Enables the ramping strategy. |
 | `enable_far_bounds` | `BT_TRUE` | Enables the far bounds strategy. |
-| `enableFlippingBounds` | `BT_FALSE` | Allows flipping active bounds between lower and upper values. *(differs from qpOASES default)* |
+| `enableFlippingBounds` | `BT_TRUE` | Allows flipping active bounds between lower and upper values. |
 | `enableRegularisation` | `BT_FALSE` | Regularises `H` when (semi-)definiteness is detected. |
 | `enable_full_li_tests` | `BT_FALSE` | Uses the condition-hardened linear-independence (LI) test. |
-| `enableNZCTests` | `BT_FALSE` | Enables the nonzero-curvature test. *(differs from qpOASES default)* |
+| `enableNZCTests` | `BT_TRUE` | Enables the nonzero-curvature test. |
 | `enable_equalities` | `BT_FALSE` | Treats equality constraints as always active. |
 | `enable_inertia_correction` | `BT_TRUE` | Repairs the working set when negative curvature is found during a hotstart. |
 | `enable_drop_infeasibles` | `BT_FALSE` | Whether infeasible constraints may be dropped. |
@@ -170,7 +166,7 @@ for a full description of each option.
 
 | Option | Default | Type | Description |
 |---|---|---|---|
-| `print_level` | `PL_LOW` | `PrintLevel` | Verbosity of qpOASES output (`PL_NONE`, `PL_LOW`, `PL_MEDIUM`, `PL_HIGH`, `PL_TABULAR`, `PL_DEBUG_ITER`). Defaults to `PL_LOW` so the solver stays quiet (qpOASES' own default is `PL_MEDIUM`). |
+| `print_level` | `PL_MEDIUM` | `PrintLevel` | Verbosity of qpOASES output (`PL_NONE`, `PL_LOW`, `PL_MEDIUM`, `PL_HIGH`, `PL_TABULAR`, `PL_DEBUG_ITER`). |
 | `initial_status_bounds` | `ST_LOWER` | `SubjectToStatus` | Status assumed for all bounds at the first iteration. |
 
 ### Print levels (`PrintLevel`)

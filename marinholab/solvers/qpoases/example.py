@@ -61,11 +61,11 @@ def positivedefinite() -> None:
     print(u_both)
 
 def semidefinite() -> None:
+    # The Hessian here is positive semi-definite (rank deficient), so the
+    # Hessian type must be set to HST_SEMIDEF; everything else stays at the
+    # defaults.
     config = qpoases.Configuration()
     config.hessian_type = qpoases.HessianType.HST_SEMIDEF
-    config.enableRegularisation = qpoases.BooleanType.BT_FALSE
-    #config.enableNZCTests = qpOASES_Solver.BooleanType.BT_TRUE
-    #config.enableFlippingBounds = qpOASES_Solver.BooleanType.BT_TRUE
     solver = qpoases.Solver(config)
 
     x = np.array([1.0, 0.0, 0.0, 0.0])

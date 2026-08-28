@@ -81,7 +81,7 @@ PYBIND11_MODULE(_core, m) {
     qpoases_configuration.def_readwrite("maximum_working_set_recalculations", &qpOASES_Solver::Configuration::maximum_working_set_recalculations, "Maximum number of working set recalculations during the initial homotopy.");
     qpoases_configuration.def_readwrite("use_hotstart", &qpOASES_Solver::Configuration::use_hotstart, "Whether subsequent solves are warm-started instead of re-initialised.");
     // qpOASES `Options` fields
-    qpoases_configuration.def_readwrite("print_level", &qpOASES_Solver::Configuration::print_level, "qpOASES print level (default PL_LOW, quiet).");
+    qpoases_configuration.def_readwrite("print_level", &qpOASES_Solver::Configuration::print_level, "qpOASES print level (default PL_MEDIUM).");
     qpoases_configuration.def_readwrite("enable_ramping", &qpOASES_Solver::Configuration::enable_ramping, "Enables the ramping strategy.");
     qpoases_configuration.def_readwrite("enable_far_bounds", &qpOASES_Solver::Configuration::enable_far_bounds, "Enables the far bounds strategy.");
     qpoases_configuration.def_readwrite("enableFlippingBounds", &qpOASES_Solver::Configuration::enableFlippingBounds, "Enables flipping of active bounds between lower and upper values.");
