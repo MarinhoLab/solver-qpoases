@@ -85,10 +85,10 @@ Configuration lives in `pyrightconfig.json` (`pythonVersion` 3.9,
   `A`/`b`/`Aeq`/`beq` and substitutes a single trivially-satisfied zero row;
   `Solver.get_active_set()` returns one entry per combined constraint row
   (-1 lower / 0 inactive / +1 upper).
-- **Style.** Match the existing style: docstrings on the public API,
-  snake_case for `Configuration` fields that map to qpOASES `Options` fields
-  (keep qpOASES-native names where they are already the established wrapper
-  spelling: `enableFlippingBounds`, `enableRegularisation`, `enableNZCTests`).
+- **Style.** Match the existing style: docstrings on the public API and
+  snake_case for every `Configuration` field (including the ones whose
+  qpOASES `Options` names are camelCase, e.g. `enable_flipping_bounds` for
+  `Options::enableFlippingBounds`).
 - **Doxygen.** C++ types and members are documented with Doxygen
   (`/** ... @brief ... @see ... */` blocks). Keep that when adding fields.
 - **Annotations.** All public Python API is fully type-annotated and must

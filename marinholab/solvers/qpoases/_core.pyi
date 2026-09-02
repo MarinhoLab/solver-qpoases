@@ -83,13 +83,13 @@ class qpOASES_Solver:
         #: Enables the far bounds strategy.
         enable_far_bounds: BooleanType
         #: Enables flipping of active bounds between lower and upper values.
-        enableFlippingBounds: BooleanType
+        enable_flipping_bounds: BooleanType
         #: Regularises the Hessian in case (semi-)definiteness is detected.
-        enableRegularisation: BooleanType
+        enable_regularisation: BooleanType
         #: Uses the condition-hardened linear independence test.
         enable_full_li_tests: BooleanType
         #: Enables the nonzero curvature test.
-        enableNZCTests: BooleanType
+        enable_nzc_tests: BooleanType
         #: Frequency of drift corrections (0 = off).
         enable_drift_correction: int
         #: Frequency of full Cholesky refactorisation of the projected Hessian (0 = updates only).
