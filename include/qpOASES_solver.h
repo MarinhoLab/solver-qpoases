@@ -98,18 +98,14 @@ class qpOASES_Solver
              *        values.
              * @see `Options::enableFlippingBounds`. Page 22 of the manual.
              */
-            BooleanType enableFlippingBounds = BT_TRUE;
+            BooleanType enable_flipping_bounds = BT_TRUE;
 
             /**
              * @brief Whether the Hessian shall be regularised in case
              *        (semi-)definiteness is detected.
-             *
-             * Defaults to BT_FALSE to match both qpOASES' own default and the
-             * effective default of this wrapper prior to this option being
-             * passed through.
              * @see `Options::enableRegularisation`. Page 26 of the manual.
              */
-            BooleanType enableRegularisation = BT_FALSE;
+            BooleanType enable_regularisation = BT_FALSE;
 
             /**
              * @brief Whether the condition-hardened linear independence
@@ -122,7 +118,7 @@ class qpOASES_Solver
              * @brief Whether nonzero curvature tests shall be used.
              * @see `Options::enableNZCTests`. Page 22 of the manual.
              */
-            BooleanType enableNZCTests = BT_TRUE;
+            BooleanType enable_nzc_tests = BT_TRUE;
 
             /**
              * @brief Frequency of drift corrections (0 = off).

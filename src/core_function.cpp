@@ -23,10 +23,10 @@ Options qpOASES_Solver::_to_qpoases_options() const
     options.printLevel = configuration_.print_level;
     options.enableRamping = configuration_.enable_ramping;
     options.enableFarBounds = configuration_.enable_far_bounds;
-    options.enableFlippingBounds = configuration_.enableFlippingBounds;
-    options.enableRegularisation = configuration_.enableRegularisation;
+    options.enableFlippingBounds = configuration_.enable_flipping_bounds;
+    options.enableRegularisation = configuration_.enable_regularisation;
     options.enableFullLITests = configuration_.enable_full_li_tests;
-    options.enableNZCTests = configuration_.enableNZCTests;
+    options.enableNZCTests = configuration_.enable_nzc_tests;
     options.enableDriftCorrection = configuration_.enable_drift_correction;
     options.enableCholeskyRefactorisation = configuration_.enable_cholesky_refactorisation;
     options.enableEqualities = configuration_.enable_equalities;

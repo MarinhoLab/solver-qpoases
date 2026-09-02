@@ -84,10 +84,10 @@ PYBIND11_MODULE(_core, m) {
     qpoases_configuration.def_readwrite("print_level", &qpOASES_Solver::Configuration::print_level, "qpOASES print level (default PL_MEDIUM).");
     qpoases_configuration.def_readwrite("enable_ramping", &qpOASES_Solver::Configuration::enable_ramping, "Enables the ramping strategy.");
     qpoases_configuration.def_readwrite("enable_far_bounds", &qpOASES_Solver::Configuration::enable_far_bounds, "Enables the far bounds strategy.");
-    qpoases_configuration.def_readwrite("enableFlippingBounds", &qpOASES_Solver::Configuration::enableFlippingBounds, "Enables flipping of active bounds between lower and upper values.");
-    qpoases_configuration.def_readwrite("enableRegularisation", &qpOASES_Solver::Configuration::enableRegularisation, "Regularises the Hessian in case (semi-)definiteness is detected.");
+    qpoases_configuration.def_readwrite("enable_flipping_bounds", &qpOASES_Solver::Configuration::enable_flipping_bounds, "Enables flipping of active bounds between lower and upper values.");
+    qpoases_configuration.def_readwrite("enable_regularisation", &qpOASES_Solver::Configuration::enable_regularisation, "Regularises the Hessian in case (semi-)definiteness is detected.");
     qpoases_configuration.def_readwrite("enable_full_li_tests", &qpOASES_Solver::Configuration::enable_full_li_tests, "Uses the condition-hardened linear independence test.");
-    qpoases_configuration.def_readwrite("enableNZCTests", &qpOASES_Solver::Configuration::enableNZCTests, "Enables the nonzero curvature test.");
+    qpoases_configuration.def_readwrite("enable_nzc_tests", &qpOASES_Solver::Configuration::enable_nzc_tests, "Enables the nonzero curvature test.");
     qpoases_configuration.def_readwrite("enable_drift_correction", &qpOASES_Solver::Configuration::enable_drift_correction, "Frequency of drift corrections (0 = off).");
     qpoases_configuration.def_readwrite("enable_cholesky_refactorisation", &qpOASES_Solver::Configuration::enable_cholesky_refactorisation, "Frequency of full Cholesky refactorisation of the projected Hessian (0 = updates only).");
     qpoases_configuration.def_readwrite("enable_equalities", &qpOASES_Solver::Configuration::enable_equalities, "Treats equality constraints as always active.");

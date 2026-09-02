@@ -67,11 +67,10 @@ def main():
     # qpOASES is an active-set solver and its Hessian must instead be flagged
     # according to its definiteness. Level 1's H1 = Jt.T @ Jt is only
     # positive semi-definite (rank <= 3 out of 7 joints), so we flag it as
-    # such and disable qpOASES' automatic regularisation, matching the
-    # `semidefinite()` pattern in `example.py`.
+    # such; everything else stays at the defaults (in particular
+    # `enable_regularisation` is already BT_FALSE).
     config_1 = qpoases.Configuration()
     config_1.hessian_type = qpoases.HessianType.HST_SEMIDEF
-    config_1.enableRegularisation = qpoases.BooleanType.BT_FALSE
 
     # Level 2's H2 = I is positive definite, so the default configuration
     # (HST_POSDEF) is adequate.

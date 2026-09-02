@@ -120,10 +120,10 @@ full description of each option.
 |---|---|---|
 | `enable_ramping` | `BT_TRUE` | Enables the ramping strategy. |
 | `enable_far_bounds` | `BT_TRUE` | Enables the far bounds strategy. |
-| `enableFlippingBounds` | `BT_TRUE` | Allows flipping active bounds between lower and upper values. |
-| `enableRegularisation` | `BT_FALSE` | Regularises `H` when (semi-)definiteness is detected. |
+| `enable_flipping_bounds` | `BT_TRUE` | Allows flipping active bounds between lower and upper values. |
+| `enable_regularisation` | `BT_FALSE` | Regularises `H` when (semi-)definiteness is detected. |
 | `enable_full_li_tests` | `BT_FALSE` | Uses the condition-hardened linear-independence (LI) test. |
-| `enableNZCTests` | `BT_TRUE` | Enables the nonzero-curvature test. |
+| `enable_nzc_tests` | `BT_TRUE` | Enables the nonzero-curvature test. |
 | `enable_equalities` | `BT_FALSE` | Treats equality constraints as always active. |
 | `enable_inertia_correction` | `BT_TRUE` | Repairs the working set when negative curvature is found during a hotstart. |
 | `enable_drop_infeasibles` | `BT_FALSE` | Whether infeasible constraints may be dropped. |
