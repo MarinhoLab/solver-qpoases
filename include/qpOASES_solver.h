@@ -40,7 +40,9 @@ class qpOASES_Solver
          *
          * Every qpOASES `Options` field is exposed here. Defaults match
          * qpOASES' own defaults for a double-precision build (see
-         * `Options::setToDefault()`).
+         * `Options::setToDefault()`), except `printLevel`, which defaults to
+         * the least verbose level (PL_NONE) so the solver is quiet by
+         * default.
          *
          * @note qpOASES applies `Options::ensureConsistency()` when it sets
          *       its options, which will silently adjust any value that falls
@@ -77,9 +79,13 @@ class qpOASES_Solver
 
             /**
              * @brief Verbose-ness of qpOASES output.
+             *
+             * Defaults to PL_NONE (the least verbose level) so the solver is
+             * quiet by default; note this intentionally differs from
+             * qpOASES' own default (PL_MEDIUM).
              * @see `Options::printLevel`
              */
-            PrintLevel printLevel = PL_MEDIUM;
+            PrintLevel printLevel = PL_NONE;
 
             /**
              * @brief Whether the ramping strategy shall be used.

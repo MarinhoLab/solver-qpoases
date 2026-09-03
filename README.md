@@ -110,9 +110,10 @@ The enum types are re-exported for convenience: `qpoases.BooleanType`,
 ### qpOASES options
 
 These map 1:1 onto qpOASES' `Options` fields. Defaults match qpOASES' own
-defaults for a **double-precision** build (see `Options::setToDefault()`). See
-the [qpOASES manual](https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf) for a
-full description of each option.
+defaults for a **double-precision** build (see `Options::setToDefault()`),
+except `printLevel`, which defaults to the least verbose level (`PL_NONE`).
+See the [qpOASES manual](https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf)
+for a full description of each option.
 
 **Booleans** (`BooleanType`: `BT_FALSE` / `BT_TRUE`)
 
@@ -166,7 +167,7 @@ full description of each option.
 
 | Option | Default | Type | Description |
 |---|---|---|---|
-| `printLevel` | `PL_MEDIUM` | `PrintLevel` | Verbosity of qpOASES output (`PL_NONE`, `PL_LOW`, `PL_MEDIUM`, `PL_HIGH`, `PL_TABULAR`, `PL_DEBUG_ITER`). |
+| `printLevel` | `PL_NONE` | `PrintLevel` | Verbosity of qpOASES output (`PL_NONE`, `PL_LOW`, `PL_MEDIUM`, `PL_HIGH`, `PL_TABULAR`, `PL_DEBUG_ITER`). Defaults to the least verbose level (`PL_NONE`), intentionally differing from qpOASES' own default (`PL_MEDIUM`). |
 | `initialStatusBounds` | `ST_LOWER` | `SubjectToStatus` | Status assumed for all bounds at the first iteration. |
 
 ### Print levels (`PrintLevel`)
