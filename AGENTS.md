@@ -75,7 +75,10 @@ Configuration lives in `pyrightconfig.json` (`pythonVersion` 3.9,
 
 - **Defaults match qpOASES.** `Configuration` defaults mirror qpOASES'
   own `Options::setToDefault()` for a double-precision build (see the
-  defaults table in `README.md`). Do not silently override them here; if a
+  defaults table in `README.md`), with one documented exception:
+  `printLevel` defaults to `PL_NONE` (the least verbose level) so the
+  solver is quiet by default (qpOASES' own default is `PL_MEDIUM`). Do not
+  silently override them here; if a
   particular problem needs a non-default option, set it on the
   `Configuration` in the *caller* (e.g. `example.py:semidefinite()` sets
   `hessian_type = HST_SEMIDEF` because its Hessian is rank-deficient).
