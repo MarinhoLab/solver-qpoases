@@ -71,6 +71,54 @@ solver.solve_quadratic_program(H, f, A, b, Aeq, beq)
 solver.get_active_set()  # e.g. [ 1.0, 0.0, 0.0]
 ```
 
+## C++ API
+
+The same solver is available directly in C++ (the Python wrapper is a thin
+pybind11 layer over it). It is built with [Eigen](https://eigen.tuxfamily.org/)
+and [qpOASES](https://github.com/coin-or/qpOASES):
+
+```cpp
+#include <marinholab/solvers/qpoases.h>
+
+namespace qpoases = marinholab::solvers::qpoases;
+
+qpoases::Configuration config;
+config.terminationTolerance = 1.0e-9;   // the rest keeps its defaults
+
+qpoases::Solver solver(config);
+
+Eigen::MatrixXd H = Eigen::MatrixXd::Identity(2, 2);
+Eigen::VectorXd f(2);
+f << -1.0, -1.0;
+
+Eigen::MatrixXd A(1, 2);
+A << 1.0, 0.0;                            // x[0] <= 0.2
+Eigen::VectorXd b(1);
+b << 0.2;
+
+Eigen::MatrixXd Aeq = Eigen::MatrixXd::Zero(1, 2);
+Eigen::VectorXd beq = Eigen::VectorXd::Zero(1);
+
+Eigen::VectorXd x = solver.solve_quadratic_program(H, f, A, b, Aeq, beq);
+// x ≈ [0.2, 1.0]
+
+Eigen::VectorXd active_set = solver.get_active_set();  // e.g. [1, 0]
+```
+
+The API mirrors the Python one: `solve_quadratic_program(H, f, A, b, Aeq, beq)`
+solves the QP above, and `get_active_set()` reports the active constraints with
+the same `-1` / `0` / `+1` convention. `Configuration` exposes the same fields
+documented below. A runnable version lives in [`example/example.cpp`](example/example.cpp).
+
+To build and run it (the example is off by default so `pip install .` is
+unaffected):
+
+```console
+cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+cmake --build build
+./build/example_qpoases
+```
+
 ## Configuration
 
 All of qpOASES' `Options` fields are exposed, plus a few wrapper-specific
@@ -181,6 +229,10 @@ for a full description of each option.
 
 ## Examples
 
+* `example/example.cpp` — a standalone C++ usage of
+  `marinholab::solvers::qpoases::Solver`. Build it with
+  `cmake -B build -GNinja -DBUILD_EXAMPLES=ON && cmake --build build`, then
+  run `./build/example_qpoases`.
 * `marinholab/solvers/qpoases/example.py` — positive-definite and
   semi-definite solves, the `None`-constraint path, and the active set. Run it
   with `qpoases_example` (installed as a console script).

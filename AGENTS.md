@@ -16,7 +16,9 @@ marinholab/solvers/qpoases/
   py.typed               PEP 561 marker so stubs are picked up by type checkers
 include/marinholab/solvers/qpoases.h C++ header (Solver + Configuration): `marinholab::solvers::qpoases::Solver` + `Configuration` (doxygen-documented)
 src/core.cpp             pybind11 module (_core): binds `Solver` + `Configuration` + enums
-src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver)
+src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver); compiled into the `marinholab_qpoases` static library
+CMakeLists.txt           CMake build: `marinholab_qpoases` static lib, `_core` pybind11 module, optional C++ example (`-DBUILD_EXAMPLES=ON`)
+example/example.cpp      standalone C++ usage example (target: `example_qpoases`)
 qpOASES/                 qpOASES (git submodule)
 pybind11/                pybind11 (git submodule)
 setup.py                 PEP 517 build (CMake + pybind11)
@@ -52,6 +54,15 @@ line of optimal `x` per sub-example (positive-definite, semi-definite,
 `example_kinematics.py` additionally needs the *optional* dependencies
 `dqrobotics` and `dqrobotics-pyplot` (`pip install --pre dqrobotics
 dqrobotics-pyplot`); it is not required for the core package to work.
+
+The standalone C++ example (`example/example.cpp`, target `example_qpoases`)
+is built only when `BUILD_EXAMPLES=ON`; it is *not* built by `pip install .`:
+
+```console
+cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
+cmake --build build
+./build/example_qpoases   # prints the optimal x and the active set
+```
 
 ## Type checking (Pyright)
 
