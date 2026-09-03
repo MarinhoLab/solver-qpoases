@@ -72,79 +72,79 @@ class qpOASES_Solver
             bool use_hotstart = true;
 
             // ------------------------------------------------------------------
-            // qpOASES `Options` fields (1:1 mapping, snake_case names).
+            // qpOASES `Options` fields (1:1 mapping, native camelCase names).
             // ------------------------------------------------------------------
 
             /**
              * @brief Verbose-ness of qpOASES output.
              * @see `Options::printLevel`
              */
-            PrintLevel print_level = PL_MEDIUM;
+            PrintLevel printLevel = PL_MEDIUM;
 
             /**
              * @brief Whether the ramping strategy shall be used.
              * @see `Options::enableRamping`
              */
-            BooleanType enable_ramping = BT_TRUE;
+            BooleanType enableRamping = BT_TRUE;
 
             /**
              * @brief Whether far bounds shall be used.
              * @see `Options::enableFarBounds`
              */
-            BooleanType enable_far_bounds = BT_TRUE;
+            BooleanType enableFarBounds = BT_TRUE;
 
             /**
              * @brief Whether active bounds may flip between lower and upper
              *        values.
              * @see `Options::enableFlippingBounds`. Page 22 of the manual.
              */
-            BooleanType enable_flipping_bounds = BT_TRUE;
+            BooleanType enableFlippingBounds = BT_TRUE;
 
             /**
              * @brief Whether the Hessian shall be regularised in case
              *        (semi-)definiteness is detected.
              * @see `Options::enableRegularisation`. Page 26 of the manual.
              */
-            BooleanType enable_regularisation = BT_FALSE;
+            BooleanType enableRegularisation = BT_FALSE;
 
             /**
              * @brief Whether the condition-hardened linear independence
              *        (LI) test shall be used.
              * @see `Options::enableFullLITests`
              */
-            BooleanType enable_full_li_tests = BT_FALSE;
+            BooleanType enableFullLITests = BT_FALSE;
 
             /**
              * @brief Whether nonzero curvature tests shall be used.
              * @see `Options::enableNZCTests`. Page 22 of the manual.
              */
-            BooleanType enable_nzc_tests = BT_TRUE;
+            BooleanType enableNZCTests = BT_TRUE;
 
             /**
              * @brief Frequency of drift corrections (0 = off).
              * @see `Options::enableDriftCorrection`
              */
-            int_t enable_drift_correction = 1;
+            int_t enableDriftCorrection = 1;
 
             /**
              * @brief Frequency of full Cholesky refactorisation of the
              *        projected Hessian (0 = use rank updates only).
              * @see `Options::enableCholeskyRefactorisation`
              */
-            int_t enable_cholesky_refactorisation = 0;
+            int_t enableCholeskyRefactorisation = 0;
 
             /**
              * @brief Whether equality constraints shall always be treated
              *        as active.
              * @see `Options::enableEqualities`
              */
-            BooleanType enable_equalities = BT_FALSE;
+            BooleanType enableEqualities = BT_FALSE;
 
             /**
              * @brief Relative termination tolerance to stop the homotopy.
              * @see `Options::terminationTolerance`
              */
-            real_t termination_tolerance = 5.0e6 * EPS;
+            real_t terminationTolerance = 5.0e6 * EPS;
 
             /**
              * @brief Lower/upper (constraints') bound tolerance; a
@@ -152,7 +152,7 @@ class qpOASES_Solver
              *        an equality constraint.
              * @see `Options::boundTolerance`
              */
-            real_t bound_tolerance = 1.0e6 * EPS;
+            real_t boundTolerance = 1.0e6 * EPS;
 
             /**
              * @brief Offset for relaxing constraint bounds at the start of
@@ -160,107 +160,107 @@ class qpOASES_Solver
              *        value.
              * @see `Options::boundRelaxation`
              */
-            real_t bound_relaxation = 1.0e4;
+            real_t boundRelaxation = 1.0e4;
 
             /**
              * @brief Numerator tolerance for the ratio test.
              * @see `Options::epsNum`
              */
-            real_t eps_num = -1.0e3 * EPS;
+            real_t epsNum = -1.0e3 * EPS;
 
             /**
              * @brief Denominator tolerance for the ratio test.
              * @see `Options::epsDen`
              */
-            real_t eps_den = 1.0e3 * EPS;
+            real_t epsDen = 1.0e3 * EPS;
 
             /**
              * @brief Maximum allowed jump in primal variables during nonzero
              *        curvature tests.
              * @see `Options::maxPrimalJump`
              */
-            real_t max_primal_jump = 1.0e8;
+            real_t maxPrimalJump = 1.0e8;
 
             /**
              * @brief Maximum allowed jump in dual variables during linear
              *        independence tests.
              * @see `Options::maxDualJump`
              */
-            real_t max_dual_jump = 1.0e8;
+            real_t maxDualJump = 1.0e8;
 
             /**
              * @brief Start value of the ramping strategy.
              * @see `Options::initialRamping`
              */
-            real_t initial_ramping = 0.5;
+            real_t initialRamping = 0.5;
 
             /**
              * @brief Final value of the ramping strategy.
              * @see `Options::finalRamping`
              */
-            real_t final_ramping = 1.0;
+            real_t finalRamping = 1.0;
 
             /**
              * @brief Initial size of the far bounds.
              * @see `Options::initialFarBounds`
              */
-            real_t initial_far_bounds = 1.0e6;
+            real_t initialFarBounds = 1.0e6;
 
             /**
              * @brief Growth factor applied to the far bounds.
              * @see `Options::growFarBounds`
              */
-            real_t grow_far_bounds = 1.0e3;
+            real_t growFarBounds = 1.0e3;
 
             /**
              * @brief Status assumed for all bounds at the first iteration.
              * @see `Options::initialStatusBounds`
              */
-            SubjectToStatus initial_status_bounds = ST_LOWER;
+            SubjectToStatus initialStatusBounds = ST_LOWER;
 
             /**
              * @brief Tolerance of the squared Cholesky diagonal factor which
              *        triggers flipping of a bound.
              * @see `Options::epsFlipping`
              */
-            real_t eps_flipping = 1.0e3 * EPS;
+            real_t epsFlipping = 1.0e3 * EPS;
 
             /**
              * @brief Maximum number of successive regularisation steps.
              * @see `Options::numRegularisationSteps`
              */
-            int_t num_regularisation_steps = 0;
+            int_t numRegularisationSteps = 0;
 
             /**
              * @brief Scaling factor of the identity matrix used for Hessian
              *        regularisation.
              * @see `Options::epsRegularisation`
              */
-            real_t eps_regularisation = 1.0e3 * EPS;
+            real_t epsRegularisation = 1.0e3 * EPS;
 
             /**
              * @brief Maximum number of iterative refinement steps.
              * @see `Options::numRefinementSteps`
              */
-            int_t num_refinement_steps = 1;
+            int_t numRefinementSteps = 1;
 
             /**
              * @brief Early termination tolerance for iterative refinement.
              * @see `Options::epsIterRef`
              */
-            real_t eps_iter_ref = 1.0e2 * EPS;
+            real_t epsIterRef = 1.0e2 * EPS;
 
             /**
              * @brief Tolerance used by the linear independence tests.
              * @see `Options::epsLITests`
              */
-            real_t eps_li_tests = 1.0e5 * EPS;
+            real_t epsLITests = 1.0e5 * EPS;
 
             /**
              * @brief Tolerance used by the nonzero curvature tests.
              * @see `Options::epsNZCTests`
              */
-            real_t eps_nzc_tests = 3.0e3 * EPS;
+            real_t epsNZCTests = 3.0e3 * EPS;
 
             /**
              * @brief Minimum reciprocal condition number of the Schur
@@ -268,38 +268,38 @@ class qpOASES_Solver
              *        triggered.
              * @see `Options::rcondSMin`
              */
-            real_t rcond_s_min = 1.0e-14;
+            real_t rcondSMin = 1.0e-14;
 
             /**
              * @brief Whether the working set shall be repaired when negative
              *        curvature is discovered during a hotstart.
              * @see `Options::enableInertiaCorrection`
              */
-            BooleanType enable_inertia_correction = BT_TRUE;
+            BooleanType enableInertiaCorrection = BT_TRUE;
 
             /**
              * @brief Whether infeasible constraints may be dropped.
              * @see `Options::enableDropInfeasibles`
              */
-            BooleanType enable_drop_infeasibles = BT_FALSE;
+            BooleanType enableDropInfeasibles = BT_FALSE;
 
             /**
              * @brief Priority used when dropping bounds.
              * @see `Options::dropBoundPriority`
              */
-            int_t drop_bound_priority = 1;
+            int_t dropBoundPriority = 1;
 
             /**
              * @brief Priority used when dropping equality constraints.
              * @see `Options::dropEqConPriority`
              */
-            int_t drop_eq_con_priority = 1;
+            int_t dropEqConPriority = 1;
 
             /**
              * @brief Priority used when dropping inequality constraints.
              * @see `Options::dropIneqConPriority`
              */
-            int_t drop_ineq_con_priority = 1;
+            int_t dropIneqConPriority = 1;
 
             /**
              * @brief Definiteness assumed for the Hessian matrix.

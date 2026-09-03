@@ -80,7 +80,7 @@ the solver:
 ```python
 config = qpoases.Configuration()
 config.hessian_type = qpoases.HessianType.HST_SEMIDEF   # H is rank-deficient
-config.termination_tolerance = 1.0e-9                    # tighter convergence
+config.terminationTolerance = 1.0e-9                    # tighter convergence
 solver = qpoases.Solver(config)
 ```
 
@@ -118,56 +118,56 @@ full description of each option.
 
 | Option | Default | Description |
 |---|---|---|
-| `enable_ramping` | `BT_TRUE` | Enables the ramping strategy. |
-| `enable_far_bounds` | `BT_TRUE` | Enables the far bounds strategy. |
-| `enable_flipping_bounds` | `BT_TRUE` | Allows flipping active bounds between lower and upper values. |
-| `enable_regularisation` | `BT_FALSE` | Regularises `H` when (semi-)definiteness is detected. |
-| `enable_full_li_tests` | `BT_FALSE` | Uses the condition-hardened linear-independence (LI) test. |
-| `enable_nzc_tests` | `BT_TRUE` | Enables the nonzero-curvature test. |
-| `enable_equalities` | `BT_FALSE` | Treats equality constraints as always active. |
-| `enable_inertia_correction` | `BT_TRUE` | Repairs the working set when negative curvature is found during a hotstart. |
-| `enable_drop_infeasibles` | `BT_FALSE` | Whether infeasible constraints may be dropped. |
+| `enableRamping` | `BT_TRUE` | Enables the ramping strategy. |
+| `enableFarBounds` | `BT_TRUE` | Enables the far bounds strategy. |
+| `enableFlippingBounds` | `BT_TRUE` | Allows flipping active bounds between lower and upper values. |
+| `enableRegularisation` | `BT_FALSE` | Regularises `H` when (semi-)definiteness is detected. |
+| `enableFullLITests` | `BT_FALSE` | Uses the condition-hardened linear-independence (LI) test. |
+| `enableNZCTests` | `BT_TRUE` | Enables the nonzero-curvature test. |
+| `enableEqualities` | `BT_FALSE` | Treats equality constraints as always active. |
+| `enableInertiaCorrection` | `BT_TRUE` | Repairs the working set when negative curvature is found during a hotstart. |
+| `enableDropInfeasibles` | `BT_FALSE` | Whether infeasible constraints may be dropped. |
 
 **Integers** (`int_t`)
 
 | Option | Default | Description |
 |---|---|---|
-| `enable_drift_correction` | `1` | Frequency of drift corrections (`0` = off). |
-| `enable_cholesky_refactorisation` | `0` | Frequency of full Cholesky refactorisation of the projected Hessian (`0` = rank updates only). |
-| `num_regularisation_steps` | `0` | Max successive regularisation steps. |
-| `num_refinement_steps` | `1` | Max iterative-refinement steps. |
-| `drop_bound_priority` | `1` | Priority used when dropping bounds. |
-| `drop_eq_con_priority` | `1` | Priority used when dropping equality constraints. |
-| `drop_ineq_con_priority` | `1` | Priority used when dropping inequality constraints. |
+| `enableDriftCorrection` | `1` | Frequency of drift corrections (`0` = off). |
+| `enableCholeskyRefactorisation` | `0` | Frequency of full Cholesky refactorisation of the projected Hessian (`0` = rank updates only). |
+| `numRegularisationSteps` | `0` | Max successive regularisation steps. |
+| `numRefinementSteps` | `1` | Max iterative-refinement steps. |
+| `dropBoundPriority` | `1` | Priority used when dropping bounds. |
+| `dropEqConPriority` | `1` | Priority used when dropping equality constraints. |
+| `dropIneqConPriority` | `1` | Priority used when dropping inequality constraints. |
 
 **Reals** (`real_t`, `double`)
 
 | Option | Default | Description |
 |---|---|---|
-| `termination_tolerance` | `5.0e6 * EPS` (~`1.1e-9`) | Relative tolerance that stops the homotopy. Smaller = more accurate, more work. |
-| `bound_tolerance` | `1.0e6 * EPS` | Bound tolerance; a constraint whose bounds differ by less is treated as an equality. |
-| `bound_relaxation` | `1.0e4` | Offset for relaxing bounds at the start of the initial homotopy (also the initial far-bound value). |
-| `eps_num` | `-1.0e3 * EPS` | Numerator tolerance for the ratio test. |
-| `eps_den` | `1.0e3 * EPS` | Denominator tolerance for the ratio test. |
-| `max_primal_jump` | `1.0e8` | Max allowed primal jump in nonzero-curvature tests. |
-| `max_dual_jump` | `1.0e8` | Max allowed dual jump in LI tests. |
-| `initial_ramping` | `0.5` | Start value of the ramping strategy. |
-| `final_ramping` | `1.0` | Final value of the ramping strategy. |
-| `initial_far_bounds` | `1.0e6` | Initial size of the far bounds. |
-| `grow_far_bounds` | `1.0e3` | Growth factor applied to the far bounds. |
-| `eps_flipping` | `1.0e3 * EPS` | Tolerance of the squared Cholesky diagonal factor that triggers flipping a bound. |
-| `eps_regularisation` | `1.0e3 * EPS` | Scaling factor of the identity matrix used for Hessian regularisation. |
-| `eps_iter_ref` | `1.0e2 * EPS` | Early-termination tolerance for iterative refinement. |
-| `eps_li_tests` | `1.0e5 * EPS` | Tolerance for the linear-independence tests. |
-| `eps_nzc_tests` | `3.0e3 * EPS` | Tolerance for the nonzero-curvature tests. |
-| `rcond_s_min` | `1.0e-14` | Min reciprocal condition number of the Schur complement before a refactorisation is triggered. |
+| `terminationTolerance` | `5.0e6 * EPS` (~`1.1e-9`) | Relative tolerance that stops the homotopy. Smaller = more accurate, more work. |
+| `boundTolerance` | `1.0e6 * EPS` | Bound tolerance; a constraint whose bounds differ by less is treated as an equality. |
+| `boundRelaxation` | `1.0e4` | Offset for relaxing bounds at the start of the initial homotopy (also the initial far-bound value). |
+| `epsNum` | `-1.0e3 * EPS` | Numerator tolerance for the ratio test. |
+| `epsDen` | `1.0e3 * EPS` | Denominator tolerance for the ratio test. |
+| `maxPrimalJump` | `1.0e8` | Max allowed primal jump in nonzero-curvature tests. |
+| `maxDualJump` | `1.0e8` | Max allowed dual jump in LI tests. |
+| `initialRamping` | `0.5` | Start value of the ramping strategy. |
+| `finalRamping` | `1.0` | Final value of the ramping strategy. |
+| `initialFarBounds` | `1.0e6` | Initial size of the far bounds. |
+| `growFarBounds` | `1.0e3` | Growth factor applied to the far bounds. |
+| `epsFlipping` | `1.0e3 * EPS` | Tolerance of the squared Cholesky diagonal factor that triggers flipping a bound. |
+| `epsRegularisation` | `1.0e3 * EPS` | Scaling factor of the identity matrix used for Hessian regularisation. |
+| `epsIterRef` | `1.0e2 * EPS` | Early-termination tolerance for iterative refinement. |
+| `epsLITests` | `1.0e5 * EPS` | Tolerance for the linear-independence tests. |
+| `epsNZCTests` | `3.0e3 * EPS` | Tolerance for the nonzero-curvature tests. |
+| `rcondSMin` | `1.0e-14` | Min reciprocal condition number of the Schur complement before a refactorisation is triggered. |
 
 **Status / print enums**
 
 | Option | Default | Type | Description |
 |---|---|---|---|
-| `print_level` | `PL_MEDIUM` | `PrintLevel` | Verbosity of qpOASES output (`PL_NONE`, `PL_LOW`, `PL_MEDIUM`, `PL_HIGH`, `PL_TABULAR`, `PL_DEBUG_ITER`). |
-| `initial_status_bounds` | `ST_LOWER` | `SubjectToStatus` | Status assumed for all bounds at the first iteration. |
+| `printLevel` | `PL_MEDIUM` | `PrintLevel` | Verbosity of qpOASES output (`PL_NONE`, `PL_LOW`, `PL_MEDIUM`, `PL_HIGH`, `PL_TABULAR`, `PL_DEBUG_ITER`). |
+| `initialStatusBounds` | `ST_LOWER` | `SubjectToStatus` | Status assumed for all bounds at the first iteration. |
 
 ### Print levels (`PrintLevel`)
 

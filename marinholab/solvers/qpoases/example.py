@@ -102,7 +102,7 @@ def termination_tolerance() -> None:
     # more working set recalculations; loosening it can speed up solves at
     # the cost of accuracy.
     config = qpoases.Configuration()
-    config.termination_tolerance = 1.0e-9
+    config.terminationTolerance = 1.0e-9
     solver = qpoases.Solver(config)
 
     x = np.array([1.0, 0.0, 0.0, 0.0])
