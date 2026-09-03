@@ -10,7 +10,7 @@ pybind11 bindings for marinholab::solvers::qpoases::Solver.
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
 
-#include <marinholab/solvers/qpoases/solver.h>
+#include <marinholab/solvers/qpoases.h>
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
