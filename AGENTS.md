@@ -85,10 +85,12 @@ Configuration lives in `pyrightconfig.json` (`pythonVersion` 3.9,
   `A`/`b`/`Aeq`/`beq` and substitutes a single trivially-satisfied zero row;
   `Solver.get_active_set()` returns one entry per combined constraint row
   (-1 lower / 0 inactive / +1 upper).
-- **Style.** Match the existing style: docstrings on the public API and
-  snake_case for every `Configuration` field (including the ones whose
-  qpOASES `Options` names are camelCase, e.g. `enable_flipping_bounds` for
-  `Options::enableFlippingBounds`).
+- **Style.** Match the existing style: docstrings on the public API.
+  `Configuration` fields that map to qpOASES `Options` fields keep the
+  library's native camelCase spelling (e.g. `enableFlippingBounds`,
+  `terminationTolerance`); only the wrapper-specific fields that have no
+  qpOASES counterpart are snake_case (`maximum_working_set_recalculations`,
+  `use_hotstart`, `hessian_type`).
 - **Doxygen.** C++ types and members are documented with Doxygen
   (`/** ... @brief ... @see ... */` blocks). Keep that when adding fields.
 - **Annotations.** All public Python API is fully type-annotated and must

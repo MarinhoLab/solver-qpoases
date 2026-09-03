@@ -68,7 +68,7 @@ def main():
     # according to its definiteness. Level 1's H1 = Jt.T @ Jt is only
     # positive semi-definite (rank <= 3 out of 7 joints), so we flag it as
     # such; everything else stays at the defaults (in particular
-    # `enable_regularisation` is already BT_FALSE).
+    # `enableRegularisation` is already BT_FALSE).
     config_1 = qpoases.Configuration()
     config_1.hessian_type = qpoases.HessianType.HST_SEMIDEF
 
