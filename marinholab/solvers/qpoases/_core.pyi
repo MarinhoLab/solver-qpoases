@@ -77,75 +77,75 @@ class qpOASES_Solver:
         #: Whether subsequent solves are warm-started instead of re-initialised.
         use_hotstart: bool
         #: qpOASES print level.
-        print_level: PrintLevel
+        printLevel: PrintLevel
         #: Enables the ramping strategy.
-        enable_ramping: BooleanType
+        enableRamping: BooleanType
         #: Enables the far bounds strategy.
-        enable_far_bounds: BooleanType
+        enableFarBounds: BooleanType
         #: Enables flipping of active bounds between lower and upper values.
-        enable_flipping_bounds: BooleanType
+        enableFlippingBounds: BooleanType
         #: Regularises the Hessian in case (semi-)definiteness is detected.
-        enable_regularisation: BooleanType
+        enableRegularisation: BooleanType
         #: Uses the condition-hardened linear independence test.
-        enable_full_li_tests: BooleanType
+        enableFullLITests: BooleanType
         #: Enables the nonzero curvature test.
-        enable_nzc_tests: BooleanType
+        enableNZCTests: BooleanType
         #: Frequency of drift corrections (0 = off).
-        enable_drift_correction: int
+        enableDriftCorrection: int
         #: Frequency of full Cholesky refactorisation of the projected Hessian (0 = updates only).
-        enable_cholesky_refactorisation: int
+        enableCholeskyRefactorisation: int
         #: Treats equality constraints as always active.
-        enable_equalities: BooleanType
+        enableEqualities: BooleanType
         #: Relative termination tolerance to stop the homotopy.
-        termination_tolerance: float
+        terminationTolerance: float
         #: Lower/upper (constraints') bound tolerance.
-        bound_tolerance: float
+        boundTolerance: float
         #: Offset for relaxing constraint bounds at the start of an initial homotopy.
-        bound_relaxation: float
+        boundRelaxation: float
         #: Numerator tolerance for the ratio test.
-        eps_num: float
+        epsNum: float
         #: Denominator tolerance for the ratio test.
-        eps_den: float
+        epsDen: float
         #: Maximum allowed jump in primal variables during nonzero curvature tests.
-        max_primal_jump: float
+        maxPrimalJump: float
         #: Maximum allowed jump in dual variables during linear independence tests.
-        max_dual_jump: float
+        maxDualJump: float
         #: Start value of the ramping strategy.
-        initial_ramping: float
+        initialRamping: float
         #: Final value of the ramping strategy.
-        final_ramping: float
+        finalRamping: float
         #: Initial size of the far bounds.
-        initial_far_bounds: float
+        initialFarBounds: float
         #: Growth factor applied to the far bounds.
-        grow_far_bounds: float
+        growFarBounds: float
         #: Status assumed for all bounds at the first iteration.
-        initial_status_bounds: SubjectToStatus
+        initialStatusBounds: SubjectToStatus
         #: Tolerance of the squared Cholesky diagonal factor which triggers flipping a bound.
-        eps_flipping: float
+        epsFlipping: float
         #: Maximum number of successive regularisation steps.
-        num_regularisation_steps: int
+        numRegularisationSteps: int
         #: Scaling factor of the identity matrix used for Hessian regularisation.
-        eps_regularisation: float
+        epsRegularisation: float
         #: Maximum number of iterative refinement steps.
-        num_refinement_steps: int
+        numRefinementSteps: int
         #: Early termination tolerance for iterative refinement.
-        eps_iter_ref: float
+        epsIterRef: float
         #: Tolerance used by the linear independence tests.
-        eps_li_tests: float
+        epsLITests: float
         #: Tolerance used by the nonzero curvature tests.
-        eps_nzc_tests: float
+        epsNZCTests: float
         #: Minimum reciprocal condition number of the Schur complement before refactorisation is triggered.
-        rcond_s_min: float
+        rcondSMin: float
         #: Repairs the working set when negative curvature is discovered during a hotstart.
-        enable_inertia_correction: BooleanType
+        enableInertiaCorrection: BooleanType
         #: Whether infeasible constraints may be dropped.
-        enable_drop_infeasibles: BooleanType
+        enableDropInfeasibles: BooleanType
         #: Priority used when dropping bounds.
-        drop_bound_priority: int
+        dropBoundPriority: int
         #: Priority used when dropping equality constraints.
-        drop_eq_con_priority: int
+        dropEqConPriority: int
         #: Priority used when dropping inequality constraints.
-        drop_ineq_con_priority: int
+        dropIneqConPriority: int
         #: Definiteness assumed for the Hessian matrix.
         hessian_type: HessianType
 
