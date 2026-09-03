@@ -14,8 +14,8 @@ marinholab/solvers/qpoases/
   example_kinematics.py  OPTIONAL example (needs dqrobotics + dqrobotics-pyplot)
   _core.pyi              type stub for the compiled _core extension (ships in the wheel)
   py.typed               PEP 561 marker so stubs are picked up by type checkers
-include/qpOASES_solver.h C++ header: qpOASES_Solver + Configuration (doxygen-documented)
-src/core.cpp             pybind11 module (_core): binds qpOASES_Solver + Configuration + enums
+include/qpOASES_solver.h C++ header: `marinholab::solvers::qpoases::Solver` + `Configuration` (doxygen-documented)
+src/core.cpp             pybind11 module (_core): binds `Solver` + `Configuration` + enums
 src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver)
 qpOASES/                 qpOASES (git submodule)
 pybind11/                pybind11 (git submodule)

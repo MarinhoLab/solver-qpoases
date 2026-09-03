@@ -5,11 +5,17 @@ Originally by Murilo M. Marinho
 #include <qpOASES_solver.h>
 //#include <print>
 
-namespace M3
+namespace marinholab
+{
+
+namespace solvers
+{
+
+namespace qpoases
 {
 
 // https://stackoverflow.com/questions/53408962/try-to-understand-compiler-error-message-default-member-initializer-required-be
-qpOASES_Solver::Configuration::Configuration() = default;
+Configuration::Configuration() = default;
 
 /**
  * \brief Builds a qpOASES `Options` object from the user configuration.
@@ -17,7 +23,7 @@ qpOASES_Solver::Configuration::Configuration() = default;
  * Maps every qpOASES `Options` field onto the corresponding `Configuration`
  * member.
  */
-Options qpOASES_Solver::_to_qpoases_options() const
+Options Solver::_to_qpoases_options() const
 {
     Options options;
     options.printLevel = configuration_.printLevel;
@@ -58,20 +64,20 @@ Options qpOASES_Solver::_to_qpoases_options() const
     return options;
 }
 
-qpOASES_Solver::qpOASES_Solver(const Configuration& configuration):
+Solver::Solver(const Configuration& configuration):
     qpoases_solve_first_time_(true),
     configuration_(configuration)
 {
 
 }
 
-std::vector<double> qpOASES_Solver::_vectorxd_to_std_vector_double(const VectorXd& vectorxd)
+std::vector<double> Solver::_vectorxd_to_std_vector_double(const VectorXd& vectorxd)
 {
     std::vector<double> vec(vectorxd.data(), vectorxd.data() + vectorxd.rows() * vectorxd.cols());
     return vec;
 }
 
-VectorXd qpOASES_Solver::_std_vector_double_to_vectorxd(std::vector<double> std_vector_double)
+VectorXd Solver::_std_vector_double_to_vectorxd(std::vector<double> std_vector_double)
 {
     double* ptr = &std_vector_double[0];
     Eigen::Map<Eigen::VectorXd> vec(ptr,std_vector_double.size());
@@ -83,17 +89,17 @@ void evaluate_problem_return_value(returnValue problem_return_value)
     if(problem_return_value != SUCCESSFUL_RETURN)
     {
         if(problem_return_value == RET_MAX_NWSR_REACHED)
-            throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): Maximum number of working set recalculations reached. Consider increasing the 'maximum_working_set_recalculations' parameter in the configuration.");
+            throw std::runtime_error("Solver::solve_quadratic_program(): Maximum number of working set recalculations reached. Consider increasing the 'maximum_working_set_recalculations' parameter in the configuration.");
         else if( problem_return_value == RET_INIT_FAILED)
-            throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): Initialization failed. Check if the problem is well defined and if the parameters are valid.");
+            throw std::runtime_error("Solver::solve_quadratic_program(): Initialization failed. Check if the problem is well defined and if the parameters are valid.");
         else
         {
-            throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): Unable to solve quadratic program. qpOASES returned error code: " + std::to_string(problem_return_value) + std::string(" ") + std::to_string(getSimpleStatus(problem_return_value)));
+            throw std::runtime_error("Solver::solve_quadratic_program(): Unable to solve quadratic program. qpOASES returned error code: " + std::to_string(problem_return_value) + std::string(" ") + std::to_string(getSimpleStatus(problem_return_value)));
         }
     }
 }
 
-VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const VectorXd& f, const MatrixXd& A, const VectorXd& b, const MatrixXd& Aeq, const VectorXd& beq)
+VectorXd Solver::solve_quadratic_program(const MatrixXd& H, const VectorXd& f, const MatrixXd& A, const VectorXd& b, const MatrixXd& Aeq, const VectorXd& beq)
 {
     const int PROBLEM_SIZE = H.rows();
     const int INEQUALITY_CONSTRAINT_SIZE = b.size();
@@ -102,17 +108,17 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
     ///Check sizes
     //Objective function
     if(H.rows()!=H.cols())
-        throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): H must be symmetric. H.rows()="+std::to_string(H.rows())+" but H.cols()="+std::to_string(H.cols())+".");
+        throw std::runtime_error("Solver::solve_quadratic_program(): H must be symmetric. H.rows()="+std::to_string(H.rows())+" but H.cols()="+std::to_string(H.cols())+".");
     if(f.size()!=H.rows())
-        throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): f must be compatible with H. H.rows()=H.cols()="+std::to_string(H.rows())+" but f.size()="+std::to_string(f.size())+".");
+        throw std::runtime_error("Solver::solve_quadratic_program(): f must be compatible with H. H.rows()=H.cols()="+std::to_string(H.rows())+" but f.size()="+std::to_string(f.size())+".");
 
     //Inequality constraints
     if(b.size()!=A.rows())
-        throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): size of b="+std::to_string(b.size())+" should be compatible with rows of A="+std::to_string(A.rows())+".");
+        throw std::runtime_error("Solver::solve_quadratic_program(): size of b="+std::to_string(b.size())+" should be compatible with rows of A="+std::to_string(A.rows())+".");
 
     //Equality constraints
     if(beq.size()!=Aeq.rows())
-        throw std::runtime_error("qpOASES_Solver::solve_quadratic_program(): size of beq="+std::to_string(beq.size())+" should be compatible with rows of Aeq="+std::to_string(Aeq.rows())+".");
+        throw std::runtime_error("Solver::solve_quadratic_program(): size of beq="+std::to_string(beq.size())+" should be compatible with rows of Aeq="+std::to_string(Aeq.rows())+".");
 
     //Append equality constraints to inequality constraints
     MatrixXd A_extended = A;
@@ -197,10 +203,10 @@ VectorXd qpOASES_Solver::solve_quadratic_program(const MatrixXd& H, const Vector
     return _std_vector_double_to_vectorxd(std::vector<double>(xOpt.begin(), xOpt.end()));
 }
 
-VectorXd qpOASES_Solver::get_active_set()
+VectorXd Solver::get_active_set()
 {
     if(qpoases_solve_first_time_)
-        throw std::runtime_error("qpOASES_Solver::get_active_set(): solve_quadratic_program() must be called at least once before the active set can be retrieved.");
+        throw std::runtime_error("Solver::get_active_set(): solve_quadratic_program() must be called at least once before the active set can be retrieved.");
 
     const int_t NC = qpoases_problem_.getNC();
     if(NC == 0)
@@ -213,14 +219,18 @@ VectorXd qpOASES_Solver::get_active_set()
 }
 
 // Helper functions to help evaluate the wrapper when needed.
-VectorXd qpOASES_Solver::test_vectorxd(const VectorXd& v)
+VectorXd Solver::test_vectorxd(const VectorXd& v)
 {
     return v;
 }
 
-MatrixXd qpOASES_Solver::test_matrixxd(const MatrixXd& m)
+MatrixXd Solver::test_matrixxd(const MatrixXd& m)
 {
     return m;
 }
 
-} // namespace M3
+} // namespace qpoases
+
+} // namespace solvers
+
+} // namespace marinholab

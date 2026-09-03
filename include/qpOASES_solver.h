@@ -5,7 +5,13 @@
 
 #include <qpOASES.hpp>
 
-namespace M3
+namespace marinholab
+{
+
+namespace solvers
+{
+
+namespace qpoases
 {
 // Keep the using-directives scoped to this namespace rather than global
 // scope: a global `using namespace Eigen;` would be active while
@@ -16,10 +22,302 @@ using namespace Eigen;
 using namespace qpOASES;
 
 /**
+ * @brief Holds all user-configurable solver options.
+ *
+ * Every qpOASES `Options` field is exposed here. Defaults match
+ * qpOASES' own defaults for a double-precision build (see
+ * `Options::setToDefault()`), except `printLevel`, which defaults to
+ * the least verbose level (PL_NONE) so the solver is quiet by
+ * default.
+ *
+ * @note qpOASES applies `Options::ensureConsistency()` when it sets
+ *       its options, which will silently adjust any value that falls
+ *       outside its allowed range (e.g. negative tolerances) to a
+ *       valid one.
+ */
+struct Configuration
+{
+    // ------------------------------------------------------------------
+    // Wrapper-specific options (not part of qpOASES' `Options`).
+    // ------------------------------------------------------------------
+
+    /**
+     * @brief Maximum number of working set recalculations performed
+     *        during the initial homotopy.
+     *
+     * This is the nWSR argument passed to `init()`/`hotstart()`.
+     * On qpOASES' side it is overwritten with the number of
+     * recalculations actually performed. See page 14 of
+     * https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf
+     */
+    int_t maximum_working_set_recalculations = 150;
+
+    /**
+     * @brief Whether subsequent solves warm-start the problem
+     *        (`hotstart()`) instead of re-initialising it
+     *        (`init()`).
+     */
+    bool use_hotstart = true;
+
+    // ------------------------------------------------------------------
+    // qpOASES `Options` fields (1:1 mapping, native camelCase names).
+    // ------------------------------------------------------------------
+
+    /**
+     * @brief Verbose-ness of qpOASES output.
+     *
+     * Defaults to PL_NONE (the least verbose level) so the solver is
+     * quiet by default; note this intentionally differs from
+     * qpOASES' own default (PL_MEDIUM).
+     * @see `Options::printLevel`
+     */
+    PrintLevel printLevel = PL_NONE;
+
+    /**
+     * @brief Whether the ramping strategy shall be used.
+     * @see `Options::enableRamping`
+     */
+    BooleanType enableRamping = BT_TRUE;
+
+    /**
+     * @brief Whether far bounds shall be used.
+     * @see `Options::enableFarBounds`
+     */
+    BooleanType enableFarBounds = BT_TRUE;
+
+    /**
+     * @brief Whether active bounds may flip between lower and upper
+     *        values.
+     * @see `Options::enableFlippingBounds`. Page 22 of the manual.
+     */
+    BooleanType enableFlippingBounds = BT_TRUE;
+
+    /**
+     * @brief Whether the Hessian shall be regularised in case
+     *        (semi-)definiteness is detected.
+     * @see `Options::enableRegularisation`. Page 26 of the manual.
+     */
+    BooleanType enableRegularisation = BT_FALSE;
+
+    /**
+     * @brief Whether the condition-hardened linear independence
+     *        (LI) test shall be used.
+     * @see `Options::enableFullLITests`
+     */
+    BooleanType enableFullLITests = BT_FALSE;
+
+    /**
+     * @brief Whether nonzero curvature tests shall be used.
+     * @see `Options::enableNZCTests`. Page 22 of the manual.
+     */
+    BooleanType enableNZCTests = BT_TRUE;
+
+    /**
+     * @brief Frequency of drift corrections (0 = off).
+     * @see `Options::enableDriftCorrection`
+     */
+    int_t enableDriftCorrection = 1;
+
+    /**
+     * @brief Frequency of full Cholesky refactorisation of the
+     *        projected Hessian (0 = use rank updates only).
+     * @see `Options::enableCholeskyRefactorisation`
+     */
+    int_t enableCholeskyRefactorisation = 0;
+
+    /**
+     * @brief Whether equality constraints shall always be treated
+     *        as active.
+     * @see `Options::enableEqualities`
+     */
+    BooleanType enableEqualities = BT_FALSE;
+
+    /**
+     * @brief Relative termination tolerance to stop the homotopy.
+     * @see `Options::terminationTolerance`
+     */
+    real_t terminationTolerance = 5.0e6 * EPS;
+
+    /**
+     * @brief Lower/upper (constraints') bound tolerance; a
+     *        constraint whose bounds differ by less is regarded as
+     *        an equality constraint.
+     * @see `Options::boundTolerance`
+     */
+    real_t boundTolerance = 1.0e6 * EPS;
+
+    /**
+     * @brief Offset for relaxing constraint bounds at the start of
+     *        an initial homotopy; also used as the initial far-bound
+     *        value.
+     * @see `Options::boundRelaxation`
+     */
+    real_t boundRelaxation = 1.0e4;
+
+    /**
+     * @brief Numerator tolerance for the ratio test.
+     * @see `Options::epsNum`
+     */
+    real_t epsNum = -1.0e3 * EPS;
+
+    /**
+     * @brief Denominator tolerance for the ratio test.
+     * @see `Options::epsDen`
+     */
+    real_t epsDen = 1.0e3 * EPS;
+
+    /**
+     * @brief Maximum allowed jump in primal variables during nonzero
+     *        curvature tests.
+     * @see `Options::maxPrimalJump`
+     */
+    real_t maxPrimalJump = 1.0e8;
+
+    /**
+     * @brief Maximum allowed jump in dual variables during linear
+     *        independence tests.
+     * @see `Options::maxDualJump`
+     */
+    real_t maxDualJump = 1.0e8;
+
+    /**
+     * @brief Start value of the ramping strategy.
+     * @see `Options::initialRamping`
+     */
+    real_t initialRamping = 0.5;
+
+    /**
+     * @brief Final value of the ramping strategy.
+     * @see `Options::finalRamping`
+     */
+    real_t finalRamping = 1.0;
+
+    /**
+     * @brief Initial size of the far bounds.
+     * @see `Options::initialFarBounds`
+     */
+    real_t initialFarBounds = 1.0e6;
+
+    /**
+     * @brief Growth factor applied to the far bounds.
+     * @see `Options::growFarBounds`
+     */
+    real_t growFarBounds = 1.0e3;
+
+    /**
+     * @brief Status assumed for all bounds at the first iteration.
+     * @see `Options::initialStatusBounds`
+     */
+    SubjectToStatus initialStatusBounds = ST_LOWER;
+
+    /**
+     * @brief Tolerance of the squared Cholesky diagonal factor which
+     *        triggers flipping of a bound.
+     * @see `Options::epsFlipping`
+     */
+    real_t epsFlipping = 1.0e3 * EPS;
+
+    /**
+     * @brief Maximum number of successive regularisation steps.
+     * @see `Options::numRegularisationSteps`
+     */
+    int_t numRegularisationSteps = 0;
+
+    /**
+     * @brief Scaling factor of the identity matrix used for Hessian
+     *        regularisation.
+     * @see `Options::epsRegularisation`
+     */
+    real_t epsRegularisation = 1.0e3 * EPS;
+
+    /**
+     * @brief Maximum number of iterative refinement steps.
+     * @see `Options::numRefinementSteps`
+     */
+    int_t numRefinementSteps = 1;
+
+    /**
+     * @brief Early termination tolerance for iterative refinement.
+     * @see `Options::epsIterRef`
+     */
+    real_t epsIterRef = 1.0e2 * EPS;
+
+    /**
+     * @brief Tolerance used by the linear independence tests.
+     * @see `Options::epsLITests`
+     */
+    real_t epsLITests = 1.0e5 * EPS;
+
+    /**
+     * @brief Tolerance used by the nonzero curvature tests.
+     * @see `Options::epsNZCTests`
+     */
+    real_t epsNZCTests = 3.0e3 * EPS;
+
+    /**
+     * @brief Minimum reciprocal condition number of the Schur
+     *        complement matrix S below which a refactorisation is
+     *        triggered.
+     * @see `Options::rcondSMin`
+     */
+    real_t rcondSMin = 1.0e-14;
+
+    /**
+     * @brief Whether the working set shall be repaired when negative
+     *        curvature is discovered during a hotstart.
+     * @see `Options::enableInertiaCorrection`
+     */
+    BooleanType enableInertiaCorrection = BT_TRUE;
+
+    /**
+     * @brief Whether infeasible constraints may be dropped.
+     * @see `Options::enableDropInfeasibles`
+     */
+    BooleanType enableDropInfeasibles = BT_FALSE;
+
+    /**
+     * @brief Priority used when dropping bounds.
+     * @see `Options::dropBoundPriority`
+     */
+    int_t dropBoundPriority = 1;
+
+    /**
+     * @brief Priority used when dropping equality constraints.
+     * @see `Options::dropEqConPriority`
+     */
+    int_t dropEqConPriority = 1;
+
+    /**
+     * @brief Priority used when dropping inequality constraints.
+     * @see `Options::dropIneqConPriority`
+     */
+    int_t dropIneqConPriority = 1;
+
+    /**
+     * @brief Definiteness assumed for the Hessian matrix.
+     *
+     * Not an `Options` field: this is the HessianType handed to the
+     * underlying SQProblem. Page 22 of the manual.
+     */
+    HessianType hessian_type = HST_POSDEF;
+
+    /**
+     * @brief Default constructor.
+     *
+     * Initialises every option to the defaults documented above.
+     *
+     * @note Declared here and defined out of line so that the
+     *       in-class member initializers are used as expected. See
+     *       https://stackoverflow.com/questions/53408962
+     */
+    Configuration();
+};
+
+/**
  * @brief High-level, reusable solver for quadratic programs (QPs) based on
  *        qpOASES.
  *
- * qpOASES_Solver exposes qpOASES' online active set solver through a
+ * `Solver` exposes qpOASES' online active set solver through a
  * MATLAB/`quadprog`-like, matrix-based interface. Internally it keeps an
  * SQProblem object so that, once initialised, subsequent calls are warm
  * started (see use_hotstart).
@@ -32,301 +330,8 @@ using namespace qpOASES;
  * @note The class is not thread-safe: a single instance owns one
  *       underlying qpOASES problem and its state changes across calls.
  */
-class qpOASES_Solver
+class Solver
 {
-    public:
-        /**
-         * @brief Holds all user-configurable solver options.
-         *
-         * Every qpOASES `Options` field is exposed here. Defaults match
-         * qpOASES' own defaults for a double-precision build (see
-         * `Options::setToDefault()`), except `printLevel`, which defaults to
-         * the least verbose level (PL_NONE) so the solver is quiet by
-         * default.
-         *
-         * @note qpOASES applies `Options::ensureConsistency()` when it sets
-         *       its options, which will silently adjust any value that falls
-         *       outside its allowed range (e.g. negative tolerances) to a
-         *       valid one.
-         */
-        struct Configuration
-        {
-            // ------------------------------------------------------------------
-            // Wrapper-specific options (not part of qpOASES' `Options`).
-            // ------------------------------------------------------------------
-
-            /**
-             * @brief Maximum number of working set recalculations performed
-             *        during the initial homotopy.
-             *
-             * This is the nWSR argument passed to `init()`/`hotstart()`.
-             * On qpOASES' side it is overwritten with the number of
-             * recalculations actually performed. See page 14 of
-             * https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf
-             */
-            int_t maximum_working_set_recalculations = 150;
-
-            /**
-             * @brief Whether subsequent solves warm-start the problem
-             *        (`hotstart()`) instead of re-initialising it
-             *        (`init()`).
-             */
-            bool use_hotstart = true;
-
-            // ------------------------------------------------------------------
-            // qpOASES `Options` fields (1:1 mapping, native camelCase names).
-            // ------------------------------------------------------------------
-
-            /**
-             * @brief Verbose-ness of qpOASES output.
-             *
-             * Defaults to PL_NONE (the least verbose level) so the solver is
-             * quiet by default; note this intentionally differs from
-             * qpOASES' own default (PL_MEDIUM).
-             * @see `Options::printLevel`
-             */
-            PrintLevel printLevel = PL_NONE;
-
-            /**
-             * @brief Whether the ramping strategy shall be used.
-             * @see `Options::enableRamping`
-             */
-            BooleanType enableRamping = BT_TRUE;
-
-            /**
-             * @brief Whether far bounds shall be used.
-             * @see `Options::enableFarBounds`
-             */
-            BooleanType enableFarBounds = BT_TRUE;
-
-            /**
-             * @brief Whether active bounds may flip between lower and upper
-             *        values.
-             * @see `Options::enableFlippingBounds`. Page 22 of the manual.
-             */
-            BooleanType enableFlippingBounds = BT_TRUE;
-
-            /**
-             * @brief Whether the Hessian shall be regularised in case
-             *        (semi-)definiteness is detected.
-             * @see `Options::enableRegularisation`. Page 26 of the manual.
-             */
-            BooleanType enableRegularisation = BT_FALSE;
-
-            /**
-             * @brief Whether the condition-hardened linear independence
-             *        (LI) test shall be used.
-             * @see `Options::enableFullLITests`
-             */
-            BooleanType enableFullLITests = BT_FALSE;
-
-            /**
-             * @brief Whether nonzero curvature tests shall be used.
-             * @see `Options::enableNZCTests`. Page 22 of the manual.
-             */
-            BooleanType enableNZCTests = BT_TRUE;
-
-            /**
-             * @brief Frequency of drift corrections (0 = off).
-             * @see `Options::enableDriftCorrection`
-             */
-            int_t enableDriftCorrection = 1;
-
-            /**
-             * @brief Frequency of full Cholesky refactorisation of the
-             *        projected Hessian (0 = use rank updates only).
-             * @see `Options::enableCholeskyRefactorisation`
-             */
-            int_t enableCholeskyRefactorisation = 0;
-
-            /**
-             * @brief Whether equality constraints shall always be treated
-             *        as active.
-             * @see `Options::enableEqualities`
-             */
-            BooleanType enableEqualities = BT_FALSE;
-
-            /**
-             * @brief Relative termination tolerance to stop the homotopy.
-             * @see `Options::terminationTolerance`
-             */
-            real_t terminationTolerance = 5.0e6 * EPS;
-
-            /**
-             * @brief Lower/upper (constraints') bound tolerance; a
-             *        constraint whose bounds differ by less is regarded as
-             *        an equality constraint.
-             * @see `Options::boundTolerance`
-             */
-            real_t boundTolerance = 1.0e6 * EPS;
-
-            /**
-             * @brief Offset for relaxing constraint bounds at the start of
-             *        an initial homotopy; also used as the initial far-bound
-             *        value.
-             * @see `Options::boundRelaxation`
-             */
-            real_t boundRelaxation = 1.0e4;
-
-            /**
-             * @brief Numerator tolerance for the ratio test.
-             * @see `Options::epsNum`
-             */
-            real_t epsNum = -1.0e3 * EPS;
-
-            /**
-             * @brief Denominator tolerance for the ratio test.
-             * @see `Options::epsDen`
-             */
-            real_t epsDen = 1.0e3 * EPS;
-
-            /**
-             * @brief Maximum allowed jump in primal variables during nonzero
-             *        curvature tests.
-             * @see `Options::maxPrimalJump`
-             */
-            real_t maxPrimalJump = 1.0e8;
-
-            /**
-             * @brief Maximum allowed jump in dual variables during linear
-             *        independence tests.
-             * @see `Options::maxDualJump`
-             */
-            real_t maxDualJump = 1.0e8;
-
-            /**
-             * @brief Start value of the ramping strategy.
-             * @see `Options::initialRamping`
-             */
-            real_t initialRamping = 0.5;
-
-            /**
-             * @brief Final value of the ramping strategy.
-             * @see `Options::finalRamping`
-             */
-            real_t finalRamping = 1.0;
-
-            /**
-             * @brief Initial size of the far bounds.
-             * @see `Options::initialFarBounds`
-             */
-            real_t initialFarBounds = 1.0e6;
-
-            /**
-             * @brief Growth factor applied to the far bounds.
-             * @see `Options::growFarBounds`
-             */
-            real_t growFarBounds = 1.0e3;
-
-            /**
-             * @brief Status assumed for all bounds at the first iteration.
-             * @see `Options::initialStatusBounds`
-             */
-            SubjectToStatus initialStatusBounds = ST_LOWER;
-
-            /**
-             * @brief Tolerance of the squared Cholesky diagonal factor which
-             *        triggers flipping of a bound.
-             * @see `Options::epsFlipping`
-             */
-            real_t epsFlipping = 1.0e3 * EPS;
-
-            /**
-             * @brief Maximum number of successive regularisation steps.
-             * @see `Options::numRegularisationSteps`
-             */
-            int_t numRegularisationSteps = 0;
-
-            /**
-             * @brief Scaling factor of the identity matrix used for Hessian
-             *        regularisation.
-             * @see `Options::epsRegularisation`
-             */
-            real_t epsRegularisation = 1.0e3 * EPS;
-
-            /**
-             * @brief Maximum number of iterative refinement steps.
-             * @see `Options::numRefinementSteps`
-             */
-            int_t numRefinementSteps = 1;
-
-            /**
-             * @brief Early termination tolerance for iterative refinement.
-             * @see `Options::epsIterRef`
-             */
-            real_t epsIterRef = 1.0e2 * EPS;
-
-            /**
-             * @brief Tolerance used by the linear independence tests.
-             * @see `Options::epsLITests`
-             */
-            real_t epsLITests = 1.0e5 * EPS;
-
-            /**
-             * @brief Tolerance used by the nonzero curvature tests.
-             * @see `Options::epsNZCTests`
-             */
-            real_t epsNZCTests = 3.0e3 * EPS;
-
-            /**
-             * @brief Minimum reciprocal condition number of the Schur
-             *        complement matrix S below which a refactorisation is
-             *        triggered.
-             * @see `Options::rcondSMin`
-             */
-            real_t rcondSMin = 1.0e-14;
-
-            /**
-             * @brief Whether the working set shall be repaired when negative
-             *        curvature is discovered during a hotstart.
-             * @see `Options::enableInertiaCorrection`
-             */
-            BooleanType enableInertiaCorrection = BT_TRUE;
-
-            /**
-             * @brief Whether infeasible constraints may be dropped.
-             * @see `Options::enableDropInfeasibles`
-             */
-            BooleanType enableDropInfeasibles = BT_FALSE;
-
-            /**
-             * @brief Priority used when dropping bounds.
-             * @see `Options::dropBoundPriority`
-             */
-            int_t dropBoundPriority = 1;
-
-            /**
-             * @brief Priority used when dropping equality constraints.
-             * @see `Options::dropEqConPriority`
-             */
-            int_t dropEqConPriority = 1;
-
-            /**
-             * @brief Priority used when dropping inequality constraints.
-             * @see `Options::dropIneqConPriority`
-             */
-            int_t dropIneqConPriority = 1;
-
-            /**
-             * @brief Definiteness assumed for the Hessian matrix.
-             *
-             * Not an `Options` field: this is the HessianType handed to the
-             * underlying SQProblem. Page 22 of the manual.
-             */
-            HessianType hessian_type = HST_POSDEF;
-
-            /**
-             * @brief Default constructor.
-             *
-             * Initialises every option to the defaults documented above.
-             *
-             * @note Declared here and defined out of line so that the
-             *       in-class member initializers are used as expected. See
-             *       https://stackoverflow.com/questions/53408962
-             */
-            Configuration();
-        };
-
     protected:
         /** @brief True until the first solve has initialised the problem. */
         bool qpoases_solve_first_time_;
@@ -366,10 +371,10 @@ class qpOASES_Solver
          * @param configuration Options to use; defaults to the default
          *                       configuration.
          */
-        qpOASES_Solver(const Configuration& configuration = qpOASES_Solver::Configuration());
+        Solver(const Configuration& configuration = Configuration());
 
         /** @brief Default destructor. */
-        ~qpOASES_Solver()=default;
+        ~Solver() = default;
 
         /**
          * @brief Solves the following quadratic program:
@@ -432,4 +437,8 @@ class qpOASES_Solver
         MatrixXd test_matrixxd(const MatrixXd& m);
 };
 
-} // namespace M3
+} // namespace qpoases
+
+} // namespace solvers
+
+} // namespace marinholab
