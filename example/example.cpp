@@ -11,26 +11,10 @@
  *     ./build/example/example_qpoases
  */
 #include <iostream>
-#include <string>
 
 #include <marinholab/solvers/qpoases.h>
 
 namespace qpoases = marinholab::solvers::qpoases;
-
-namespace
-{
-    void print_vector(const std::string& label, const Eigen::VectorXd& v)
-    {
-        std::cout << label << " = [";
-        for (Eigen::Index i = 0; i < v.size(); ++i)
-        {
-            if (i != 0)
-                std::cout << ' ';
-            std::cout << v[i];
-        }
-        std::cout << "]\n";
-    }
-} // namespace
 
 int main()
 {
@@ -67,8 +51,10 @@ int main()
     Eigen::VectorXd x = solver.solve_quadratic_program(H, f, A, b, Aeq, beq);
 
     // 4. Inspect the result and the active set.
-    print_vector("x", x);
-    print_vector("active set", solver.get_active_set());
+    // `.transpose()` makes Eigen print the (column) vector as a single
+    // horizontal line.
+    std::cout << "x = " << x.transpose() << "\n";
+    std::cout << "active set = " << solver.get_active_set().transpose() << "\n";
 
     return 0;
 }
