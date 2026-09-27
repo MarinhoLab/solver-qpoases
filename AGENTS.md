@@ -16,8 +16,8 @@ marinholab/solvers/qpoases/
   py.typed               PEP 561 marker so stubs are picked up by type checkers
 include/marinholab/solvers/qpoases.h C++ header (Solver + Configuration): `marinholab::solvers::qpoases::Solver` + `Configuration` (doxygen-documented)
 src/core.cpp             pybind11 module (_core): binds `Solver` + `Configuration` + enums
-src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver); compiled into the `marinholab_qpoases` static library
-CMakeLists.txt           CMake build: `marinholab_qpoases` static lib, `_core` pybind11 module, optional C++ example (`-DBUILD_EXAMPLES=ON`)
+src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver); compiled into the `marinholab_qpoases` library (shared by default, `-DBUILD_SHARED_LIBS=OFF` for static)
+CMakeLists.txt           CMake build: `marinholab_qpoases` lib (shared by default), `_core` pybind11 module (`-DBUILD_PYTHON=ON`), optional C++ example (`-DBUILD_EXAMPLES=ON`)
 example/example.cpp      standalone C++ usage example (target: `example_qpoases`)
 qpOASES/                 qpOASES (git submodule)
 pybind11/                pybind11 (git submodule)

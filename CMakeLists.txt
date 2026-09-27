@@ -16,14 +16,18 @@ option(BUILD_EXAMPLES "Build the standalone C++ example (example/)." OFF)
 # which passes -DBUILD_PYTHON=ON; the C++-only build (Debian package,
 # find_package consumers) leaves it OFF.
 option(BUILD_PYTHON "Build the pybind11 Python extension module (_core)." OFF)
+# Shared library by default; build a static library with -DBUILD_SHARED_LIBS=OFF.
+# The option() establishes the default while still honouring a value that a
+# parent project (or the command line) provides.
+option(BUILD_SHARED_LIBS "Build the marinholab_qpoases shared library" ON)
 
 find_package(Eigen3 REQUIRED)
 
 # https://stackoverflow.com/questions/38296756/what-is-the-idiomatic-way-in-cmake-to-add-the-fpic-compiler-option
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # The Python build bundles the static library into the pybind11 module, so
-# qpOASES must be static there. The Debian build (BUILD_PYTHON=OFF) builds
-# shared libraries instead, honouring -DBUILD_SHARED_LIBS=ON.
+# qpOASES must be static there. The C++-only build follows BUILD_SHARED_LIBS
+# (shared by default).
 if(BUILD_PYTHON)
     set(BUILD_SHARED_LIBS FALSE CACHE BOOL "x" FORCE)
 endif()
@@ -33,26 +37,17 @@ add_subdirectory(qpOASES)
 
 # The Solver/Configuration implementation. Both the pybind11 module and the
 # standalone example link against it, so the C++ code is compiled exactly once.
-# Static by default; shared when -DBUILD_SHARED_LIBS=ON (the Debian package).
-if(BUILD_SHARED_LIBS)
-    add_library(marinholab_qpoases SHARED
-            src/core_function.cpp
-        )
-else()
-    add_library(marinholab_qpoases STATIC
-            src/core_function.cpp
-        )
-endif()
+# Shared by default; static with -DBUILD_SHARED_LIBS=OFF.
+add_library(marinholab_qpoases
+        src/core_function.cpp
+    )
 add_library(marinholab::solvers::qpoases ALIAS marinholab_qpoases)
 
 set_target_properties(marinholab_qpoases PROPERTIES
     OUTPUT_NAME marinholab_solver_qpoases
-    POSITION_INDEPENDENT_CODE ON)
-if(BUILD_SHARED_LIBS)
-    set_target_properties(marinholab_qpoases PROPERTIES
-        VERSION ${PROJECT_VERSION}
-        SOVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
-endif()
+    POSITION_INDEPENDENT_CODE ON
+    VERSION ${PROJECT_VERSION}
+    SOVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 
 target_include_directories(marinholab_qpoases
     PUBLIC
