@@ -2,6 +2,7 @@
 build/
 dist/
 *.egg-info/
+.deb-out/
 
 # Python caches
 __pycache__/

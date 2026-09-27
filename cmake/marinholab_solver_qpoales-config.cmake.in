@@ -1,0 +1,45 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+# The public header uses Eigen types in its method signatures.
+find_dependency(Eigen3)
+# qpOASES is installed into this package by qpOASES' own CMake rules; its CMake
+# package (found via the standard module) also sets qpOASES_LIBRARY /
+# qpOASES_INCLUDE_DIR.
+find_dependency(qpOASES)
+if(NOT qpOASES_LIBRARY)
+    find_library(qpOASES_LIBRARY NAMES qpOASES
+        PATHS "@PACKAGE_LIB_INSTALL_DIR@" NO_DEFAULT_PATH)
+endif()
+if(NOT qpOASES_INCLUDE_DIR)
+    find_path(qpOASES_INCLUDE_DIR NAMES qpOASES.hpp
+        PATHS "@PACKAGE_INCLUDE_INSTALL_DIR@" NO_DEFAULT_PATH)
+endif()
+# qpOASES does not export a CMake target; recreate one so the link interface
+# (below) can reference `qpOASES`.
+if(NOT TARGET qpOASES AND qpOASES_LIBRARY AND qpOASES_INCLUDE_DIR)
+    add_library(qpOASES SHARED IMPORTED)
+    set_target_properties(qpOASES PROPERTIES
+        IMPORTED_LOCATION "${qpOASES_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${qpOASES_INCLUDE_DIR}")
+endif()
+
+find_library(marinholab_solver_qpoales_LIBRARY NAMES marinholab_solver_qpoales
+    PATHS "@PACKAGE_LIB_INSTALL_DIR@" NO_DEFAULT_PATH)
+find_path(marinholab_solver_qpoales_INCLUDE_DIR NAMES marinholab/solvers/qpoases.h
+    PATHS "@PACKAGE_INCLUDE_INSTALL_DIR@" NO_DEFAULT_PATH)
+
+# The solver library, exposed as marinholab::solvers::qpoales.
+if(marinholab_solver_qpoales_LIBRARY AND marinholab_solver_qpoales_INCLUDE_DIR)
+    add_library(marinholab::solvers::qpoales SHARED IMPORTED)
+    set_target_properties(marinholab::solvers::qpoales PROPERTIES
+        IMPORTED_LOCATION "${marinholab_solver_qpoales_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${marinholab_solver_qpoales_INCLUDE_DIR}"
+        INTERFACE_LINK_LIBRARIES "Eigen3::Eigen;qpOASES")
+endif()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(marinholab_solver_qpoales
+    REQUIRED_VARS
+        marinholab_solver_qpoales_LIBRARY
+        marinholab_solver_qpoales_INCLUDE_DIR)

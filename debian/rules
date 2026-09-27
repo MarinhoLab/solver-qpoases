@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+
+export CFLAGS   := $(shell dpkg-buildflags --get CFLAGS)
+export CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
+export CPPFLAGS := $(shell dpkg-buildflags --get CPPFLAGS)
+export LDFLAGS  := $(shell dpkg-buildflags --get LDFLAGS)
+
+%:
+	dh $@ --buildsystem=cmake
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG" \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_SHARED_LIBS=ON \
+		-DBUILD_PYTHON=OFF \
+		-DBUILD_EXAMPLES=OFF

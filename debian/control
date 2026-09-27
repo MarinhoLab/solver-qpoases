@@ -1,0 +1,27 @@
+Source: libmarinholab-solver-qpoales
+Section: libs
+Priority: optional
+Maintainer: Murilo M Marinho <murilomarinho@ieee.org>
+Build-Depends: debhelper-compat (= 13),
+ make,
+ cmake,
+ g++,
+ libeigen3-dev
+Standards-Version: 4.6.2
+Homepage: https://github.com/MarinhoLab/solver-qpoales
+
+Package: libmarinholab-solver-qpoales
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: C++ qpOASES active-set solver wrapper (marinholab)
+ The marinholab-solvers-qpoales C++ package provides the ROS-independent
+ C++ part of the solver-qpoales project: the marinholab::solvers::qpoales
+ namespace with the Solver (an online active-set quadratic-program solver
+ wrapping qpOASES' QPSolver) and its Configuration option holder.
+ .
+ It is built with CMake (with -O3) and exposes the CMake target
+ marinholab::solvers::qpoales. The qpOASES dependency (coin-or/qpOASES) is
+ vendored as a git submodule and installed into the same package. The
+ pybind11 Python extension is intentionally NOT part of this package; it is
+ produced by `pip install .` from the same source tree.
