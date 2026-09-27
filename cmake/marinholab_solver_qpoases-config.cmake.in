@@ -24,22 +24,22 @@ if(NOT TARGET qpOASES AND qpOASES_LIBRARY AND qpOASES_INCLUDE_DIR)
         INTERFACE_INCLUDE_DIRECTORIES "${qpOASES_INCLUDE_DIR}")
 endif()
 
-find_library(marinholab_solver_qpoales_LIBRARY NAMES marinholab_solver_qpoales
+find_library(marinholab_solver_qpoases_LIBRARY NAMES marinholab_solver_qpoases
     PATHS "@PACKAGE_LIB_INSTALL_DIR@" NO_DEFAULT_PATH)
-find_path(marinholab_solver_qpoales_INCLUDE_DIR NAMES marinholab/solvers/qpoases.h
+find_path(marinholab_solver_qpoases_INCLUDE_DIR NAMES marinholab/solvers/qpoases.h
     PATHS "@PACKAGE_INCLUDE_INSTALL_DIR@" NO_DEFAULT_PATH)
 
-# The solver library, exposed as marinholab::solvers::qpoales.
-if(marinholab_solver_qpoales_LIBRARY AND marinholab_solver_qpoales_INCLUDE_DIR)
-    add_library(marinholab::solvers::qpoales SHARED IMPORTED)
-    set_target_properties(marinholab::solvers::qpoales PROPERTIES
-        IMPORTED_LOCATION "${marinholab_solver_qpoales_LIBRARY}"
-        INTERFACE_INCLUDE_DIRECTORIES "${marinholab_solver_qpoales_INCLUDE_DIR}"
+# The solver library, exposed as marinholab::solvers::qpoases.
+if(marinholab_solver_qpoases_LIBRARY AND marinholab_solver_qpoases_INCLUDE_DIR)
+    add_library(marinholab::solvers::qpoases SHARED IMPORTED)
+    set_target_properties(marinholab::solvers::qpoases PROPERTIES
+        IMPORTED_LOCATION "${marinholab_solver_qpoases_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${marinholab_solver_qpoases_INCLUDE_DIR}"
         INTERFACE_LINK_LIBRARIES "Eigen3::Eigen;qpOASES")
 endif()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(marinholab_solver_qpoales
+find_package_handle_standard_args(marinholab_solver_qpoases
     REQUIRED_VARS
-        marinholab_solver_qpoales_LIBRARY
-        marinholab_solver_qpoales_INCLUDE_DIR)
+        marinholab_solver_qpoases_LIBRARY
+        marinholab_solver_qpoases_INCLUDE_DIR)

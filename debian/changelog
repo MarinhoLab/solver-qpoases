@@ -1,7 +1,7 @@
-libmarinholab-solver-qpoales (26.09.00) noble; urgency=medium
+libmarinholab-solver-qpoases (26.09.00) noble; urgency=medium
 
-  * Initial Debian package of the C++ part of the solver-qpoales project:
-    the marinholab::solvers::qpoales library (Solver + Configuration) and
+  * Initial Debian package of the C++ part of the solver-qpoases project:
+    the marinholab::solvers::qpoases library (Solver + Configuration) and
     its qpOASES dependency, built with CMake and -O3.
     The pybind11 Python extension is not packaged; it is built by
     `pip install .`.
