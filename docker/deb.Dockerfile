@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         dpkg-dev debhelper devscripts \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /opt/solver-qpoales
-COPY . /opt/solver-qpoales
+WORKDIR /opt/solver-qpoases
+COPY . /opt/solver-qpoases
 
-CMD ["bash", "/opt/solver-qpoales/docker/build-deb.sh"]
+CMD ["bash", "/opt/solver-qpoases/docker/build-deb.sh"]

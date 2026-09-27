@@ -6,7 +6,7 @@ if(WIN32)
 endif()
 
 include(cmake/GetVersion.cmake)
-project(marinholab_solver_qpoales VERSION ${QPOALES_VERSION} LANGUAGES CXX)
+project(marinholab_solver_qpoases VERSION ${QPOASES_VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,37 +35,37 @@ add_subdirectory(qpOASES)
 # Static by default (the Python build); shared for the Debian package, which
 # passes -DBUILD_SHARED_LIBS=ON.
 if(BUILD_SHARED_LIBS)
-    add_library(marinholab_qpoales SHARED
+    add_library(marinholab_qpoases SHARED
             src/core_function.cpp
         )
 else()
-    add_library(marinholab_qpoales STATIC
+    add_library(marinholab_qpoases STATIC
             src/core_function.cpp
         )
 endif()
-add_library(marinholab::solvers::qpoales ALIAS marinholab_qpoales)
+add_library(marinholab::solvers::qpoases ALIAS marinholab_qpoases)
 
-set_target_properties(marinholab_qpoales PROPERTIES
-    OUTPUT_NAME marinholab_solver_qpoales
+set_target_properties(marinholab_qpoases PROPERTIES
+    OUTPUT_NAME marinholab_solver_qpoases
     POSITION_INDEPENDENT_CODE ON)
 if(BUILD_SHARED_LIBS)
-    set_target_properties(marinholab_qpoales PROPERTIES
+    set_target_properties(marinholab_qpoases PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")
 endif()
 
-target_include_directories(marinholab_qpoales
+target_include_directories(marinholab_qpoases
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include
         qpOASES/include
     )
 
-target_link_libraries(marinholab_qpoales PUBLIC Eigen3::Eigen qpOASES)
+target_link_libraries(marinholab_qpoases PUBLIC Eigen3::Eigen qpOASES)
 
 # Build the standalone C++ example (see example/example.cpp).
 if (BUILD_EXAMPLES)
-    add_executable(example_qpoales example/example.cpp)
-    target_link_libraries(example_qpoales PRIVATE marinholab_qpoales)
+    add_executable(example_qpoases example/example.cpp)
+    target_link_libraries(example_qpoases PRIVATE marinholab_qpoases)
 endif ()
 
 # Python extension (built only for `pip install .` / setup.py).
@@ -75,7 +75,7 @@ if(BUILD_PYTHON)
     pybind11_add_module(_core MODULE
             src/core.cpp
         )
-    target_link_libraries(_core PRIVATE marinholab_qpoales)
+    target_link_libraries(_core PRIVATE marinholab_qpoases)
     # Version is dynamically obtained. See pyproject.toml
     # Activating this causes issues with Windows compilation.
     # target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
@@ -93,7 +93,7 @@ include(CMakePackageConfigHelpers)
 set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 set(LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
 
-install(TARGETS marinholab_qpoales
+install(TARGETS marinholab_qpoases
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -101,21 +101,21 @@ install(TARGETS marinholab_qpoales
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 if(BUILD_EXAMPLES)
-    install(TARGETS example_qpoales RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(TARGETS example_qpoases RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
 configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/marinholab_solver_qpoales-config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/marinholab_solver_qpoales-config.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/marinholab_solver_qpoales
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/marinholab_solver_qpoases-config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/marinholab_solver_qpoases-config.cmake
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/marinholab_solver_qpoases
     PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR)
 
 write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/marinholab_solver_qpoales-config-version.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/marinholab_solver_qpoases-config-version.cmake
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion)
 
 install(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/marinholab_solver_qpoales-config.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/marinholab_solver_qpoales-config-version.cmake
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/marinholab_solver_qpoales)
+    ${CMAKE_CURRENT_BINARY_DIR}/marinholab_solver_qpoases-config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/marinholab_solver_qpoases-config-version.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/marinholab_solver_qpoases)

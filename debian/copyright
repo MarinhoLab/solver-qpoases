@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: marinholab-solvers-qpoales
+Upstream-Name: marinholab-solvers-qpoases
 Upstream-Contact: Murilo M Marinho <murilomarinho@ieee.org>
-Source: https://github.com/MarinhoLab/solver-qpoales
+Source: https://github.com/MarinhoLab/solver-qpoases
 
 Files: *
 Copyright: 2026 Murilo Marques Marinho
