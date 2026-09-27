@@ -12,9 +12,10 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_EXAMPLES "Build the standalone C++ example (example/)." OFF)
-# The Debian package ships only the C++ library; the pybind11 Python extension
-# is built via `pip install .` / setup.py instead.
-option(BUILD_PYTHON "Build the pybind11 Python extension module (_core)." ON)
+# The pybind11 Python extension is built via `pip install .` / setup.py,
+# which passes -DBUILD_PYTHON=ON; the C++-only build (Debian package,
+# find_package consumers) leaves it OFF.
+option(BUILD_PYTHON "Build the pybind11 Python extension module (_core)." OFF)
 
 find_package(Eigen3 REQUIRED)
 
@@ -32,8 +33,7 @@ add_subdirectory(qpOASES)
 
 # The Solver/Configuration implementation. Both the pybind11 module and the
 # standalone example link against it, so the C++ code is compiled exactly once.
-# Static by default (the Python build); shared for the Debian package, which
-# passes -DBUILD_SHARED_LIBS=ON.
+# Static by default; shared when -DBUILD_SHARED_LIBS=ON (the Debian package).
 if(BUILD_SHARED_LIBS)
     add_library(marinholab_qpoases SHARED
             src/core_function.cpp
