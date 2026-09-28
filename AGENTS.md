@@ -115,6 +115,15 @@ Configuration lives in `pyrightconfig.json` (`pythonVersion` 3.9,
   `config.set("hessian_type", qpoases.HessianType.HST_SEMIDEF)` because its
   Hessian is rank-deficient). Re-validate the `example.py` and
   `example_kinematics.py` solves after any change to a default.
+- **Real-valued defaults must round-trip.** Format them with
+  `detail::real_to_string` (`%.15g`, falling back to `%.17g`), never
+  `std::to_string`: its six decimals turned every small qpOASES tolerance
+  (`terminationTolerance`, `epsNum`, `epsLITests`, ...) into 0, and qpOASES
+  then failed on well-posed QPs (errors 36/68). `test_tolerance_defaults_match_qpoases`
+  checks them.
+- **Variable bounds are passed explicitly** as -INFTY/+INFTY arrays, never
+  `NULL`: with `enableFarBounds` off, qpOASES' `hotstart()` dereferences them
+  without a NULL check.
 - **String-keyed `Configuration`.** Options are set by name with a string
   value (`set(key, value)`); the C++ public header exposes no qpOASES
   types (qpOASES is reached only through the pimpl in
