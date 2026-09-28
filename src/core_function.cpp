@@ -543,6 +543,7 @@ Eigen::VectorXd Solver::solve_quadratic_program(const Eigen::MatrixXd& H, const 
         A_extended << Aeq;
         ub_extended.resize(EQUALITY_CONSTRAINT_SIZE);
         ub_extended << beq;
+        lb_extended.resize(EQUALITY_CONSTRAINT_SIZE);
         lb_extended << beq;
     }
 
@@ -578,6 +579,15 @@ Eigen::VectorXd Solver::solve_quadratic_program(const Eigen::MatrixXd& H, const 
 
     auto& problem = impl_->qpoases_problem_;
     auto& configuration = impl_->configuration_;
+
+    // qpOASES fixes the number of variables and constraints when the problem
+    // is constructed. Both hotstart() and a repeated init() read the new data
+    // with those sizes, so a problem with different sizes must be constructed
+    // again instead of reusing the previous one.
+    if(!impl_->qpoases_solve_first_time_
+       && (problem.getNV() != PROBLEM_SIZE
+           || problem.getNC() != INEQUALITY_CONSTRAINT_SIZE + EQUALITY_CONSTRAINT_SIZE))
+        impl_->qpoases_solve_first_time_ = true;
 
     if(impl_->qpoases_solve_first_time_)
     {
