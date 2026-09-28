@@ -17,7 +17,7 @@ marinholab/solvers/qpoases/
 include/marinholab/solvers/qpoases.h C++ header (Solver + Configuration): `marinholab::solvers::qpoases::Solver` + `Configuration` (doxygen-documented)
 src/core.cpp             pybind11 module (_core): binds `Solver` + `Configuration` + enums
 src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver); compiled into the `marinholab_qpoases` library (shared by default, `-DBUILD_SHARED_LIBS=OFF` for static)
-CMakeLists.txt           CMake build: `marinholab_qpoases` lib (shared by default), `_core` pybind11 module (`-DBUILD_PYTHON=ON`), optional C++ example (`-DBUILD_EXAMPLES=ON`). The vendored qpOASES is always built **static** and its archive is bundled/installed with the package.
+CMakeLists.txt           CMake build: `marinholab_qpoases` lib (shared by default), `_core` pybind11 module (`-DBUILD_PYTHON=ON`), optional C++ example (`-DBUILD_EXAMPLES=ON`). The vendored qpOASES is always built **static**, linked **PRIVATE** into `marinholab_qpoases`, and its archive is bundled/installed with the package — consumers only link `marinholab::solvers::qpoases`.
 example/example.cpp      standalone C++ usage example (target: `example_qpoases`)
 qpOASES/                 qpOASES (git submodule)
 pybind11/                pybind11 (git submodule)
