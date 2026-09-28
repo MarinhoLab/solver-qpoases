@@ -63,9 +63,9 @@ def positivedefinite() -> None:
 def semidefinite() -> None:
     # The Hessian here is positive semi-definite (rank deficient), so the
     # Hessian type must be set to HST_SEMIDEF; everything else stays at the
-    # defaults.
+    # defaults. The configuration is string-keyed, so options are set by name.
     config = qpoases.Configuration()
-    config.hessian_type = qpoases.HessianType.HST_SEMIDEF
+    config.set("hessian_type", qpoases.HessianType.HST_SEMIDEF)
     solver = qpoases.Solver(config)
 
     x = np.array([1.0, 0.0, 0.0, 0.0])
@@ -102,7 +102,7 @@ def termination_tolerance() -> None:
     # more working set recalculations; loosening it can speed up solves at
     # the cost of accuracy.
     config = qpoases.Configuration()
-    config.terminationTolerance = 1.0e-9
+    config.set("terminationTolerance", 1.0e-9)
     solver = qpoases.Solver(config)
 
     x = np.array([1.0, 0.0, 0.0, 0.0])

@@ -108,7 +108,7 @@ and [qpOASES](https://github.com/coin-or/qpOASES):
 namespace qpoases = marinholab::solvers::qpoases;
 
 qpoases::Configuration config;
-config.terminationTolerance = 1.0e-9;   // the rest keeps its defaults
+config.set("terminationTolerance", "1.0e-9");  // the rest keeps its defaults
 
 qpoases::Solver solver(config);
 
@@ -132,8 +132,8 @@ Eigen::VectorXd active_set = solver.get_active_set();  // e.g. [1, 0]
 
 The API mirrors the Python one: `solve_quadratic_program(H, f, A, b, Aeq, beq)`
 solves the QP above, and `get_active_set()` reports the active constraints with
-the same `-1` / `0` / `+1` convention. `Configuration` exposes the same fields
-documented below. A runnable version lives in [`example/example.cpp`](example/example.cpp).
+the same `-1` / `0` / `+1` convention. `Configuration` is string-keyed (see
+below); a runnable version lives in [`example/example.cpp`](example/example.cpp).
 
 To build and run it (the example is off by default so `pip install .` is
 unaffected):
@@ -147,15 +147,34 @@ cmake --build build
 ## Configuration
 
 All of qpOASES' `Options` fields are exposed, plus a few wrapper-specific
-settings. Create a `Configuration`, tweak the fields you need, and pass it to
-the solver:
+settings. The `Configuration` is **string-keyed** — options are set by name
+with a string value — so the public API (and the C++ header) stays free of
+qpOASES types. Values are strings: booleans are `"true"`/`"false"`, numbers
+are literals, and enum options take the enum value name (e.g. `"HST_SEMIDEF"`,
+`"PL_NONE"`). Defaults match qpOASES' double-precision defaults except
+`printLevel` (`"PL_NONE"`).
 
 ```python
 config = qpoases.Configuration()
-config.hessian_type = qpoases.HessianType.HST_SEMIDEF   # H is rank-deficient
-config.terminationTolerance = 1.0e-9                    # tighter convergence
+config.set("hessian_type", qpoases.HessianType.HST_SEMIDEF)  # H is rank-deficient
+config.set("terminationTolerance", 1.0e-9)                   # tighter convergence
 solver = qpoases.Solver(config)
 ```
+
+`set()` accepts a string, an enum member (used by its name), a number, or a
+bool, so the last two lines above work just as well as
+`config.set("terminationTolerance", "1.0e-9")`. The other accessors are:
+
+| Method | Returns |
+|---|---|
+| `config.get(key)` | the option's value as a string (or its default) |
+| `config.has(key)` | whether `key` has been explicitly set |
+| `config.keys()` | sorted list of all settable option names |
+| `config.defaults()` | mapping of option name -> default string value |
+| `config.reset(key)` / `config.reset_all()` | revert to the default(s) |
+
+Setting an unknown key, or a value that does not parse for the option's type,
+raises `ValueError`.
 
 The enum types are re-exported for convenience: `qpoases.BooleanType`,
 `qpoases.HessianType`, `qpoases.PrintLevel`, and `qpoases.SubjectToStatus`.
@@ -165,7 +184,7 @@ The enum types are re-exported for convenience: `qpoases.BooleanType`,
 | Option | Default | Type | Description |
 |---|---|---|---|
 | `maximum_working_set_recalculations` | `150` | `int` | Max working-set recalculations during the initial homotopy (`nWSR` passed to `init`/`hotstart`). Increase if solves hit the maximum. |
-| `use_hotstart` | `True` | `bool` | Warm-start subsequent solves with `hotstart()` instead of re-initialising with `init()`. |
+| `use_hotstart` | `true` | `bool` | Warm-start subsequent solves with `hotstart()` instead of re-initialising with `init()`. |
 | `hessian_type` | `HST_POSDEF` | `HessianType` | Definiteness assumed for `H`; given to the underlying `SQProblem`. |
 
 ### Hessian definiteness (`HessianType`)
@@ -188,19 +207,19 @@ except `printLevel`, which defaults to the least verbose level (`PL_NONE`).
 See the [qpOASES manual](https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf)
 for a full description of each option.
 
-**Booleans** (`BooleanType`: `BT_FALSE` / `BT_TRUE`)
+**Booleans** (set as `"true"` / `"false"`)
 
 | Option | Default | Description |
 |---|---|---|
-| `enableRamping` | `BT_TRUE` | Enables the ramping strategy. |
-| `enableFarBounds` | `BT_TRUE` | Enables the far bounds strategy. |
-| `enableFlippingBounds` | `BT_TRUE` | Allows flipping active bounds between lower and upper values. |
-| `enableRegularisation` | `BT_FALSE` | Regularises `H` when (semi-)definiteness is detected. |
-| `enableFullLITests` | `BT_FALSE` | Uses the condition-hardened linear-independence (LI) test. |
-| `enableNZCTests` | `BT_TRUE` | Enables the nonzero-curvature test. |
-| `enableEqualities` | `BT_FALSE` | Treats equality constraints as always active. |
-| `enableInertiaCorrection` | `BT_TRUE` | Repairs the working set when negative curvature is found during a hotstart. |
-| `enableDropInfeasibles` | `BT_FALSE` | Whether infeasible constraints may be dropped. |
+| `enableRamping` | `true` | Enables the ramping strategy. |
+| `enableFarBounds` | `true` | Enables the far bounds strategy. |
+| `enableFlippingBounds` | `true` | Allows flipping active bounds between lower and upper values. |
+| `enableRegularisation` | `false` | Regularises `H` when (semi-)definiteness is detected. |
+| `enableFullLITests` | `false` | Uses the condition-hardened linear-independence (LI) test. |
+| `enableNZCTests` | `true` | Enables the nonzero-curvature test. |
+| `enableEqualities` | `false` | Treats equality constraints as always active. |
+| `enableInertiaCorrection` | `true` | Repairs the working set when negative curvature is found during a hotstart. |
+| `enableDropInfeasibles` | `false` | Whether infeasible constraints may be dropped. |
 
 **Integers** (`int_t`)
 

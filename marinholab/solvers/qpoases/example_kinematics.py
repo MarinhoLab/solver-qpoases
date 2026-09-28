@@ -70,7 +70,7 @@ def main():
     # such; everything else stays at the defaults (in particular
     # `enableRegularisation` is already BT_FALSE).
     config_1 = qpoases.Configuration()
-    config_1.hessian_type = qpoases.HessianType.HST_SEMIDEF
+    config_1.set("hessian_type", qpoases.HessianType.HST_SEMIDEF)
 
     # Level 2's H2 = I is positive definite, so the default configuration
     # (HST_POSDEF) is adequate.
