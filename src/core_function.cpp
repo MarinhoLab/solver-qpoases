@@ -4,6 +4,7 @@ Originally by Murilo M. Marinho
 */
 #include <algorithm>
 #include <cctype>
+#include <cstdio>
 #include <cstdlib>
 #include <stdexcept>
 
@@ -158,6 +159,25 @@ inline T parse_enum(const std::string& key, const std::string& value,
 }
 
 /**
+ * @brief Formats a real so that it reads back exactly.
+ *
+ * std::to_string prints six decimals, which turns qpOASES' small tolerances
+ * (e.g. epsNum = -1e3 * EPS) into zero. %.15g is tried first for a short
+ * string, then %.17g, which always round-trips a double.
+ */
+inline std::string real_to_string(double value)
+{
+    char buffer[32];
+    for (int precision : {15, 17})
+    {
+        std::snprintf(buffer, sizeof(buffer), "%.*g", precision, value);
+        if (std::strtod(buffer, nullptr) == value)
+            break;
+    }
+    return std::string(buffer);
+}
+
+/**
  * @brief The default value of `key`, as a string, from qpOASES itself.
  */
 inline std::string default_for(const std::string& key)
@@ -190,17 +210,17 @@ inline std::string default_for(const std::string& key)
         d["enableDriftCorrection"] = std::to_string(options.enableDriftCorrection);
         d["enableCholeskyRefactorisation"] = std::to_string(options.enableCholeskyRefactorisation);
         d["enableEqualities"] = options.enableEqualities == BT_TRUE ? "true" : "false";
-        d["terminationTolerance"] = std::to_string(options.terminationTolerance);
-        d["boundTolerance"] = std::to_string(options.boundTolerance);
-        d["boundRelaxation"] = std::to_string(options.boundRelaxation);
-        d["epsNum"] = std::to_string(options.epsNum);
-        d["epsDen"] = std::to_string(options.epsDen);
-        d["maxPrimalJump"] = std::to_string(options.maxPrimalJump);
-        d["maxDualJump"] = std::to_string(options.maxDualJump);
-        d["initialRamping"] = std::to_string(options.initialRamping);
-        d["finalRamping"] = std::to_string(options.finalRamping);
-        d["initialFarBounds"] = std::to_string(options.initialFarBounds);
-        d["growFarBounds"] = std::to_string(options.growFarBounds);
+        d["terminationTolerance"] = real_to_string(options.terminationTolerance);
+        d["boundTolerance"] = real_to_string(options.boundTolerance);
+        d["boundRelaxation"] = real_to_string(options.boundRelaxation);
+        d["epsNum"] = real_to_string(options.epsNum);
+        d["epsDen"] = real_to_string(options.epsDen);
+        d["maxPrimalJump"] = real_to_string(options.maxPrimalJump);
+        d["maxDualJump"] = real_to_string(options.maxDualJump);
+        d["initialRamping"] = real_to_string(options.initialRamping);
+        d["finalRamping"] = real_to_string(options.finalRamping);
+        d["initialFarBounds"] = real_to_string(options.initialFarBounds);
+        d["growFarBounds"] = real_to_string(options.growFarBounds);
         d["initialStatusBounds"] = [&] {
             const char* name = "ST_LOWER";
             switch(options.initialStatusBounds) {
@@ -213,14 +233,14 @@ inline std::string default_for(const std::string& key)
             }
             return std::string(name);
         }();
-        d["epsFlipping"] = std::to_string(options.epsFlipping);
+        d["epsFlipping"] = real_to_string(options.epsFlipping);
         d["numRegularisationSteps"] = std::to_string(options.numRegularisationSteps);
-        d["epsRegularisation"] = std::to_string(options.epsRegularisation);
+        d["epsRegularisation"] = real_to_string(options.epsRegularisation);
         d["numRefinementSteps"] = std::to_string(options.numRefinementSteps);
-        d["epsIterRef"] = std::to_string(options.epsIterRef);
-        d["epsLITests"] = std::to_string(options.epsLITests);
-        d["epsNZCTests"] = std::to_string(options.epsNZCTests);
-        d["rcondSMin"] = std::to_string(options.rcondSMin);
+        d["epsIterRef"] = real_to_string(options.epsIterRef);
+        d["epsLITests"] = real_to_string(options.epsLITests);
+        d["epsNZCTests"] = real_to_string(options.epsNZCTests);
+        d["rcondSMin"] = real_to_string(options.rcondSMin);
         d["enableInertiaCorrection"] = options.enableInertiaCorrection == BT_TRUE ? "true" : "false";
         d["enableDropInfeasibles"] = options.enableDropInfeasibles == BT_TRUE ? "true" : "false";
         d["dropBoundPriority"] = std::to_string(options.dropBoundPriority);
@@ -577,6 +597,12 @@ Eigen::VectorXd Solver::solve_quadratic_program(const Eigen::MatrixXd& H, const 
         }
     }
 
+    // No variable bounds: pass -INFTY/+INFTY explicitly. qpOASES accepts NULL
+    // for "no bounds", but with enableFarBounds off its hotstart() reads
+    // lb_new[i] without checking for NULL (QProblem::updateActivitiesForHotstart).
+    std::vector<real_t> lb_vec(PROBLEM_SIZE, -INFTY);
+    std::vector<real_t> ub_vec(PROBLEM_SIZE, INFTY);
+
     auto& problem = impl_->qpoases_problem_;
     auto& configuration = impl_->configuration_;
 
@@ -594,7 +620,7 @@ Eigen::VectorXd Solver::solve_quadratic_program(const Eigen::MatrixXd& H, const 
         problem = qpOASES::SQProblem(PROBLEM_SIZE, INEQUALITY_CONSTRAINT_SIZE + EQUALITY_CONSTRAINT_SIZE, detail::hessian_type_from(configuration));
         problem.setOptions(detail::options_from(configuration));
         auto maximum_working_set_recalculations_local = detail::maximum_working_set_recalculations_from(configuration); //qpOASES changes the value, so we make a local copy
-        auto problem_init_return = problem.init(H_vec,g_vec,A_vec,NULL,NULL,lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
+        auto problem_init_return = problem.init(H_vec,g_vec,A_vec,lb_vec.data(),ub_vec.data(),lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
 
         detail::evaluate_problem_return_value(problem_init_return);
 
@@ -606,9 +632,9 @@ Eigen::VectorXd Solver::solve_quadratic_program(const Eigen::MatrixXd& H, const 
 
         returnValue problem_return_value;
         if(detail::use_hotstart_from(configuration))
-            problem_return_value = problem.hotstart(H_vec,g_vec,A_vec,NULL,NULL,lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
+            problem_return_value = problem.hotstart(H_vec,g_vec,A_vec,lb_vec.data(),ub_vec.data(),lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
         else
-            problem_return_value = problem.init(H_vec,g_vec,A_vec,NULL,NULL,lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
+            problem_return_value = problem.init(H_vec,g_vec,A_vec,lb_vec.data(),ub_vec.data(),lbA_vec,ubA_vec,maximum_working_set_recalculations_local);
         detail::evaluate_problem_return_value(problem_return_value);
     }
 
