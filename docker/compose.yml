@@ -8,4 +8,5 @@ services:
     command: /bin/bash -c "
       cd /root/solver-qpoases
       && pip install . --break-system-packages
+      && (cd tests && python3 -m pytest -q)
       && qpoases_example"

@@ -22,6 +22,7 @@ src/core.cpp             pybind11 module (_core): binds `Solver` + string-based 
 src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver via pimpl); option name->string map; compiled into the `marinholab_qpoases` library (shared by default, `-DBUILD_SHARED_LIBS=OFF` for static)
 CMakeLists.txt           CMake build: `marinholab_qpoases` lib (shared by default), `_core` pybind11 module (`-DBUILD_PYTHON=ON`), optional C++ example (`-DBUILD_EXAMPLES=ON`). The vendored qpOASES is always built **static**, linked **PRIVATE** into `marinholab_qpoases`, and its archive is bundled/installed with the package — consumers only link `marinholab::solvers::qpoases`.
 example/example.cpp      standalone C++ usage example (target: `example_qpoases`)
+tests/test_solver.py     pytest tests for `Solver` (see "Tests")
 qpOASES/                 qpOASES (git submodule)
 pybind11/                pybind11 (git submodule)
 setup.py                 PEP 517 build (CMake + pybind11)
@@ -66,6 +67,22 @@ cmake -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=ON
 cmake --build build
 ./build/example_qpoases   # prints the optimal x and the active set
 ```
+
+## Tests
+
+```console
+pip install pytest
+cd tests && python -m pytest
+```
+
+Run pytest from inside `tests/`, not from the repository root. From the root,
+the source `marinholab/` directory (which has no compiled `_core`) shadows the
+installed package. CI runs the tests in the Docker job (`docker/compose.yml`)
+before `qpoases_example`.
+
+`tests/test_solver.py` checks that one `Solver` instance gives the same
+answers as a fresh one when the number of variables or constraints changes
+between calls, with `use_hotstart` on and off.
 
 ## Type checking (Pyright)
 
