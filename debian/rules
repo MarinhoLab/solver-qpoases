@@ -1,9 +1,14 @@
 #!/usr/bin/make -f
 
-export CFLAGS   := $(shell dpkg-buildflags --get CFLAGS)
-export CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS)
+# LTO is disabled (-fno-lto, appended after the distro flags so it wins):
+# linking the static qpOASES archive into this wrapper hits a GCC 13 linker
+# internal compiler error on x86-64 (lto1: return_token, opts-common.cc:2137)
+# on Ubuntu noble, where -flto=auto is the default. It also buys no real
+# benefit for a wrapper this small.
+export CFLAGS   := $(shell dpkg-buildflags --get CFLAGS) -fno-lto
+export CXXFLAGS := $(shell dpkg-buildflags --get CXXFLAGS) -fno-lto
 export CPPFLAGS := $(shell dpkg-buildflags --get CPPFLAGS)
-export LDFLAGS  := $(shell dpkg-buildflags --get LDFLAGS)
+export LDFLAGS  := $(shell dpkg-buildflags --get LDFLAGS) -fno-lto
 
 %:
 	dh $@ --buildsystem=cmake
