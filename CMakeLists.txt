@@ -61,7 +61,14 @@ target_include_directories(marinholab_qpoases
         qpOASES/include
     )
 
-target_link_libraries(marinholab_qpoases PUBLIC Eigen3::Eigen qpOASES)
+# The vendored qpOASES is a private implementation detail: its static archive
+# is linked into this package, so consumers only ever link the
+# marinholab::solvers::qpoases target. (The public header still needs
+# qpOASES' *headers*, which live in the PUBLIC include directory above and
+# are installed alongside our own.)
+target_link_libraries(marinholab_qpoases
+    PUBLIC Eigen3::Eigen
+    PRIVATE qpOASES)
 
 # Build the standalone C++ example (see example/example.cpp).
 if (BUILD_EXAMPLES)
