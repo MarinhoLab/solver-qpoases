@@ -127,6 +127,34 @@ Configuration lives in `pyrightconfig.json` (`pythonVersion` 3.9,
 `ubuntu-24.04-arm` for Python 3.12 and 3.13 and publishes to PyPI. Local
 builds here mirror that (aarch64, Python 3.13).
 
+## Debian build (libmarinholab-solver-qpoases)
+
+The `.deb` is **not** built by this repo's CI — it is built by the
+SmartArmStack `build_ros2.sh` (SmartArmStack/smart_arm_stack_ROS2), which
+clones `main` with submodules, runs `bash tools/bump-changelog.sh` and
+`dpkg-buildpackage -us -uc -b` on this `debian/` directory, then `dpkg -i`
+installs it. `build_ros2.sh`'s matrix is `ubuntu-24.04` (amd64) +
+`ubuntu-24.04-arm` (arm64); the `debian/` packaging is shared, so it must
+build on **both** architectures.
+
+```console
+bash docker/build-deb.sh            # build the .deb -> ./.deb-out/
+bash docker/build-deb.sh --test     # + install it and build/run a
+                                    # find_package consumer inside the container
+```
+
+`debian/rules` appends `-fno-lto` after the `dpkg-buildflags` defaults:
+Ubuntu noble enables `-flto=auto`, and LTO hits a GCC 13 linker internal
+compiler error on x86-64 when linking the vendored static qpOASES archive
+(`lto1: return_token, opts-common.cc:2137`). Do not re-enable LTO.
+
+Verified (2026-09-28, commit `fix-amd64-lto-debian-build` / PR #14): on both
+amd64 and arm64 — `dpkg-buildpackage` succeeds, the `.deb` installs, and a
+`find_package(marinholab_solver_qpoases)` consumer linking
+`marinholab::solvers::qpoases` builds and solves. The `.deb` carries the
+static `libqpOASES.a` (bundled) plus the headers; `Depends` is only
+libc6/libgcc-s1/libstdc++6, i.e. qpOASES is fully private.
+
 ## Version
 
 The version is `0.0.1` in `pyproject.toml`; `setup.py` computes a
