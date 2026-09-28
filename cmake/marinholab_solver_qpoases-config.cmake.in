@@ -5,7 +5,8 @@ include(CMakeFindDependencyMacro)
 find_dependency(Eigen3)
 # qpOASES is installed into this package by qpOASES' own CMake rules; its CMake
 # package (found via the standard module) also sets qpOASES_LIBRARY /
-# qpOASES_INCLUDE_DIR.
+# qpOASES_INCLUDE_DIR. It is built and shipped as a static archive, which is
+# linked into (or alongside) marinholab_solver_qpoases.
 find_dependency(qpOASES)
 if(NOT qpOASES_LIBRARY)
     find_library(qpOASES_LIBRARY NAMES qpOASES
@@ -15,10 +16,10 @@ if(NOT qpOASES_INCLUDE_DIR)
     find_path(qpOASES_INCLUDE_DIR NAMES qpOASES.hpp
         PATHS "@PACKAGE_INCLUDE_INSTALL_DIR@" NO_DEFAULT_PATH)
 endif()
-# qpOASES does not export a CMake target; recreate one so the link interface
-# (below) can reference `qpOASES`.
+# qpOASES does not export a CMake target; recreate one (static, matching the
+# bundled archive) so the link interface (below) can reference `qpOASES`.
 if(NOT TARGET qpOASES AND qpOASES_LIBRARY AND qpOASES_INCLUDE_DIR)
-    add_library(qpOASES SHARED IMPORTED)
+    add_library(qpOASES STATIC IMPORTED)
     set_target_properties(qpOASES PROPERTIES
         IMPORTED_LOCATION "${qpOASES_LIBRARY}"
         INTERFACE_INCLUDE_DIRECTORIES "${qpOASES_INCLUDE_DIR}")

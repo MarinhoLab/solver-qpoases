@@ -4,9 +4,34 @@ A [qpOASES](https://github.com/coin-or/qpOASES) wrapper for Python that ships
 prebuilt binaries. It exposes qpOASES' online active-set solver through a thin,
 numpy-friendly, MATLAB-`quadprog`-like interface.
 
+## Installation
+
+### Python (PyPI)
+
 ```console
 pip install marinholab-solvers-qpoases
 ```
+
+### C++ (Ubuntu `.deb` from the SmartArmStack PPA)
+
+The C++ part (`marinholab::solvers::qpoases`, with qpOASES bundled) is
+distributed as the `libmarinholab-solver-qpoases` `.deb` from the
+[SmartArmStack](https://smartarmstack.github.io) APT repository hosted at
+`smartarmstack.github.io`. On Ubuntu (Noble/24.04), add it and install:
+
+```console
+curl -s --compressed "https://smartarmstack.github.io/smart_arm_stack_ROS2/KEY.gpg" \
+    | gpg --dearmor \
+    | sudo tee /etc/apt/trusted.gpg.d/smartarmstack_lgpl.gpg >/dev/null
+sudo curl -s --compressed -o /etc/apt/sources.list.d/smartarmstack_lgpl.list \
+    "https://smartarmstack.github.io/smart_arm_stack_ROS2/smartarmstack_lgpl.list"
+sudo apt update
+sudo apt-get install libmarinholab-solver-qpoases
+```
+
+This is the same repository the SmartArmStack ROS2 packages come from; see
+[smartarmstack.github.io](https://smartarmstack.github.io) for the full list
+of available packages.
 
 ## Overview
 

@@ -25,15 +25,21 @@ find_package(Eigen3 REQUIRED)
 
 # https://stackoverflow.com/questions/38296756/what-is-the-idiomatic-way-in-cmake-to-add-the-fpic-compiler-option
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-# The Python build bundles the static library into the pybind11 module, so
-# qpOASES must be static there. The C++-only build follows BUILD_SHARED_LIBS
-# (shared by default).
+# qpOASES is always built as a *static* library: its archive is bundled
+# (installed) with our package rather than shipped as a separate shared object.
+# The Python build additionally links it into the pybind11 module, so our own
+# library must be static there as well; the C++-only build lets
+# marinholab_qpoases follow BUILD_SHARED_LIBS (shared by default).
 if(BUILD_PYTHON)
     set(BUILD_SHARED_LIBS FALSE CACHE BOOL "x" FORCE)
 endif()
 # See subdirectory for the flag below
 set(QPOASES_BUILD_EXAMPLES FALSE)
+# Shadow the shared-lib default so the vendored qpOASES builds static here even
+# when our own library is shared; unset restores it for the targets below.
+set(BUILD_SHARED_LIBS FALSE)
 add_subdirectory(qpOASES)
+unset(BUILD_SHARED_LIBS)
 
 # The Solver/Configuration implementation. Both the pybind11 module and the
 # standalone example link against it, so the C++ code is compiled exactly once.

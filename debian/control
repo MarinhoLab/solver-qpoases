@@ -22,6 +22,7 @@ Description: C++ qpOASES active-set solver wrapper (marinholab)
  .
  It is built with CMake (with -O3) and exposes the CMake target
  marinholab::solvers::qpoases. The qpOASES dependency (coin-or/qpOASES) is
- vendored as a git submodule and installed into the same package. The
- pybind11 Python extension is intentionally NOT part of this package; it is
- produced by `pip install .` from the same source tree.
+ vendored as a git submodule, built as a static archive, and bundled into
+ the same package. The pybind11 Python extension is intentionally NOT part
+ of this package; it is produced by `pip install .` from the same source
+ tree.
