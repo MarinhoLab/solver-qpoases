@@ -2,13 +2,21 @@
 (C) Copyright 2025-26 Murilo Marinho (murilomarinho@ieee.org)
 
 pybind11 bindings for marinholab::solvers::qpoases::Solver.
+
+The `Configuration` is exposed with string-based accessors (`set`, `get`,
+`has`, `keys`, `defaults`, `reset`), backed by a map of option name ->
+string value, so the Python surface is free of qpOASES enum types. For
+convenience, `set()` also accepts Python enum members (e.g. a
+`HessianType`) or plain numbers/booleans and normalises them to the string
+form expected by the C++ core.
 */
 
-#include <vector>
+#include <string>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 
 #include <marinholab/solvers/qpoases.h>
 
@@ -17,6 +25,45 @@ pybind11 bindings for marinholab::solvers::qpoases::Solver.
 
 namespace py = pybind11;
 using namespace marinholab::solvers::qpoases;
+
+namespace
+{
+
+/**
+ * @brief Normalises an arbitrary Python value into the string form the C++
+ * `Configuration::set()` expects.
+ *
+ * Accepts:
+ *  - `str`              -> unchanged
+ *  - an enum member     -> its `.name` (e.g. `HessianType.HST_SEMIDEF` ->
+ *                          `"HST_SEMIDEF"`)
+ *  - `bool`             -> `"true"` / `"false"`
+ *  - `int`              -> its decimal representation
+ *  - `float`            -> its repr
+ */
+std::string normalize_option_value(py::handle value)
+{
+    if(py::isinstance<py::str>(value))
+        return value.cast<std::string>();
+
+    if(py::hasattr(value, "name"))
+        return py::str(value.attr("name")).cast<std::string>();
+
+    if(py::isinstance<py::bool_>(value))
+        return py::cast<bool>(value) ? "true" : "false";
+
+    if(py::isinstance<py::int_>(value))
+        return std::to_string(py::cast<long long>(value));
+
+    if(py::isinstance<py::float_>(value))
+        return py::str(value).cast<std::string>();
+
+    throw py::type_error(
+        "Option value must be a string, an enum member, a number, or a bool; "
+        "got " + py::str(value.get_type()).cast<std::string>());
+}
+
+} // namespace
 
 PYBIND11_MODULE(_core, m) {
 
@@ -30,93 +77,55 @@ PYBIND11_MODULE(_core, m) {
         "            Aeq*x = beq\n\n"
         "Method signature is compatible with MATLAB's `quadprog`. Once the\n"
         "problem has been solved once, subsequent solves are warm-started by\n"
-        "default (see `Configuration.use_hotstart`).");
+        "default (see the `use_hotstart` option on the Configuration).");
 
-    py::enum_<BooleanType>(qpoases_solver, "BooleanType",
-        "qpOASES logical values.")
-    .value("BT_FALSE", BooleanType::BT_FALSE)
-    .value("BT_TRUE", BooleanType::BT_TRUE)
-    .export_values();
+    py::class_<Configuration> configuration(qpoases_solver, "Configuration",
+        "String-keyed holder of all user-configurable solver options.\n\n"
+        "Every qpOASES `Options` field plus the wrapper-specific settings\n"
+        "(`maximum_working_set_recalculations`, `use_hotstart`,\n"
+        "`hessian_type`) is exposed under its name via `set()`/`get()`.\n"
+        "Values are strings; booleans are \"true\"/\"false\", and enum\n"
+        "options take the enum value name (e.g. \"HST_SEMIDEF\", \"PL_NONE\").\n"
+        "Defaults match qpOASES' double-precision defaults except\n"
+        "`printLevel`, which defaults to \"PL_NONE\". See `keys()` and\n"
+        "`defaults()` for the full list.");
 
-    py::enum_<HessianType>(qpoases_solver, "HessianType",
-        "qpOASES Hessian definiteness types.")
-    .value("HST_ZERO", HessianType::HST_ZERO)
-    .value("HST_IDENTITY", HessianType::HST_IDENTITY)
-    .value("HST_POSDEF", HessianType::HST_POSDEF)
-    .value("HST_POSDEF_NULLSPACE", HessianType::HST_POSDEF_NULLSPACE)
-    .value("HST_SEMIDEF", HessianType::HST_SEMIDEF)
-    .value("HST_INDEF", HessianType::HST_INDEF)
-    .value("HST_UNKNOWN", HessianType::HST_UNKNOWN)
-    .export_values();
-
-    py::enum_<PrintLevel>(qpoases_solver, "PrintLevel",
-        "qpOASES print levels, describing the desired amount of output at runtime.")
-    .value("PL_DEBUG_ITER", PrintLevel::PL_DEBUG_ITER)
-    .value("PL_TABULAR", PrintLevel::PL_TABULAR)
-    .value("PL_NONE", PrintLevel::PL_NONE)
-    .value("PL_LOW", PrintLevel::PL_LOW)
-    .value("PL_MEDIUM", PrintLevel::PL_MEDIUM)
-    .value("PL_HIGH", PrintLevel::PL_HIGH)
-    .export_values();
-
-    py::enum_<SubjectToStatus>(qpoases_solver, "SubjectToStatus",
-        "qpOASES bound/constraint statuses.")
-    .value("ST_LOWER", SubjectToStatus::ST_LOWER)
-    .value("ST_INACTIVE", SubjectToStatus::ST_INACTIVE)
-    .value("ST_UPPER", SubjectToStatus::ST_UPPER)
-    .value("ST_INFEASIBLE_LOWER", SubjectToStatus::ST_INFEASIBLE_LOWER)
-    .value("ST_INFEASIBLE_UPPER", SubjectToStatus::ST_INFEASIBLE_UPPER)
-    .value("ST_UNDEFINED", SubjectToStatus::ST_UNDEFINED)
-    .export_values();
-
-    py::class_<Configuration> qpoases_configuration(qpoases_solver, "Configuration",
-        "All user-configurable solver options.\n\n"
-        "Members are the 1:1 mapping of qpOASES' `Options` fields (plus the\n"
-        "wrapper-specific `maximum_working_set_recalculations`, `use_hotstart`\n"
-        "and `hessian_type`). See the qpOASES manual for a full description\n"
-        "of each option: https://www.coin-or.org/qpOASES/doc/3.0/manual.pdf");
-
-    qpoases_configuration.def(py::init<>());
-    // Wrapper-specific options
-    qpoases_configuration.def_readwrite("maximum_working_set_recalculations", &Configuration::maximum_working_set_recalculations, "Maximum number of working set recalculations during the initial homotopy.");
-    qpoases_configuration.def_readwrite("use_hotstart", &Configuration::use_hotstart, "Whether subsequent solves are warm-started instead of re-initialised.");
-    // qpOASES `Options` fields
-    qpoases_configuration.def_readwrite("printLevel", &Configuration::printLevel, "qpOASES print level (default PL_NONE, the least verbose).");
-    qpoases_configuration.def_readwrite("enableRamping", &Configuration::enableRamping, "Enables the ramping strategy.");
-    qpoases_configuration.def_readwrite("enableFarBounds", &Configuration::enableFarBounds, "Enables the far bounds strategy.");
-    qpoases_configuration.def_readwrite("enableFlippingBounds", &Configuration::enableFlippingBounds, "Enables flipping of active bounds between lower and upper values.");
-    qpoases_configuration.def_readwrite("enableRegularisation", &Configuration::enableRegularisation, "Regularises the Hessian in case (semi-)definiteness is detected.");
-    qpoases_configuration.def_readwrite("enableFullLITests", &Configuration::enableFullLITests, "Uses the condition-hardened linear independence test.");
-    qpoases_configuration.def_readwrite("enableNZCTests", &Configuration::enableNZCTests, "Enables the nonzero curvature test.");
-    qpoases_configuration.def_readwrite("enableDriftCorrection", &Configuration::enableDriftCorrection, "Frequency of drift corrections (0 = off).");
-    qpoases_configuration.def_readwrite("enableCholeskyRefactorisation", &Configuration::enableCholeskyRefactorisation, "Frequency of full Cholesky refactorisation of the projected Hessian (0 = updates only).");
-    qpoases_configuration.def_readwrite("enableEqualities", &Configuration::enableEqualities, "Treats equality constraints as always active.");
-    qpoases_configuration.def_readwrite("terminationTolerance", &Configuration::terminationTolerance, "Relative termination tolerance to stop the homotopy.");
-    qpoases_configuration.def_readwrite("boundTolerance", &Configuration::boundTolerance, "Lower/upper (constraints') bound tolerance.");
-    qpoases_configuration.def_readwrite("boundRelaxation", &Configuration::boundRelaxation, "Offset for relaxing constraint bounds at the start of an initial homotopy.");
-    qpoases_configuration.def_readwrite("epsNum", &Configuration::epsNum, "Numerator tolerance for the ratio test.");
-    qpoases_configuration.def_readwrite("epsDen", &Configuration::epsDen, "Denominator tolerance for the ratio test.");
-    qpoases_configuration.def_readwrite("maxPrimalJump", &Configuration::maxPrimalJump, "Maximum allowed jump in primal variables during nonzero curvature tests.");
-    qpoases_configuration.def_readwrite("maxDualJump", &Configuration::maxDualJump, "Maximum allowed jump in dual variables during linear independence tests.");
-    qpoases_configuration.def_readwrite("initialRamping", &Configuration::initialRamping, "Start value of the ramping strategy.");
-    qpoases_configuration.def_readwrite("finalRamping", &Configuration::finalRamping, "Final value of the ramping strategy.");
-    qpoases_configuration.def_readwrite("initialFarBounds", &Configuration::initialFarBounds, "Initial size of the far bounds.");
-    qpoases_configuration.def_readwrite("growFarBounds", &Configuration::growFarBounds, "Growth factor applied to the far bounds.");
-    qpoases_configuration.def_readwrite("initialStatusBounds", &Configuration::initialStatusBounds, "Status assumed for all bounds at the first iteration.");
-    qpoases_configuration.def_readwrite("epsFlipping", &Configuration::epsFlipping, "Tolerance of the squared Cholesky diagonal factor which triggers flipping a bound.");
-    qpoases_configuration.def_readwrite("numRegularisationSteps", &Configuration::numRegularisationSteps, "Maximum number of successive regularisation steps.");
-    qpoases_configuration.def_readwrite("epsRegularisation", &Configuration::epsRegularisation, "Scaling factor of the identity matrix used for Hessian regularisation.");
-    qpoases_configuration.def_readwrite("numRefinementSteps", &Configuration::numRefinementSteps, "Maximum number of iterative refinement steps.");
-    qpoases_configuration.def_readwrite("epsIterRef", &Configuration::epsIterRef, "Early termination tolerance for iterative refinement.");
-    qpoases_configuration.def_readwrite("epsLITests", &Configuration::epsLITests, "Tolerance used by the linear independence tests.");
-    qpoases_configuration.def_readwrite("epsNZCTests", &Configuration::epsNZCTests, "Tolerance used by the nonzero curvature tests.");
-    qpoases_configuration.def_readwrite("rcondSMin", &Configuration::rcondSMin, "Minimum reciprocal condition number of the Schur complement before refactorisation is triggered.");
-    qpoases_configuration.def_readwrite("enableInertiaCorrection", &Configuration::enableInertiaCorrection, "Repairs the working set when negative curvature is discovered during a hotstart.");
-    qpoases_configuration.def_readwrite("enableDropInfeasibles", &Configuration::enableDropInfeasibles, "Whether infeasible constraints may be dropped.");
-    qpoases_configuration.def_readwrite("dropBoundPriority", &Configuration::dropBoundPriority, "Priority used when dropping bounds.");
-    qpoases_configuration.def_readwrite("dropEqConPriority", &Configuration::dropEqConPriority, "Priority used when dropping equality constraints.");
-    qpoases_configuration.def_readwrite("dropIneqConPriority", &Configuration::dropIneqConPriority, "Priority used when dropping inequality constraints.");
-    qpoases_configuration.def_readwrite("hessian_type", &Configuration::hessian_type, "Definiteness assumed for the Hessian matrix.");
+    configuration.def(py::init<>());
+    configuration.def("set",
+        [](Configuration& self, const std::string& key, const std::string& value) {
+            self.set(key, value);
+        },
+        py::arg("key"), py::arg("value"),
+        "Sets the option `key` to the string `value`. Raises ValueError for an "
+        "unknown key or a value that does not parse for that option's type.");
+    configuration.def("set",
+        [](Configuration& self, const std::string& key, py::handle value) {
+            self.set(key, normalize_option_value(value));
+        },
+        py::arg("key"), py::arg("value"),
+        "Convenience overload: also accepts enum members, numbers, and bools "
+        "(normalised to their string form).");
+    configuration.def("get",
+        &Configuration::get,
+        py::arg("key"),
+        "Returns the string value of `key`, or its default if not set.");
+    configuration.def("has",
+        &Configuration::has,
+        py::arg("key"),
+        "True if `key` has been explicitly set.");
+    configuration.def("keys",
+        &Configuration::keys,
+        "Sorted list of all settable option names.");
+    configuration.def("defaults",
+        &Configuration::defaults,
+        "Mapping of option name -> default string value.");
+    configuration.def("reset",
+        &Configuration::reset,
+        py::arg("key"),
+        "Reverts `key` to its default.");
+    configuration.def("reset_all",
+        &Configuration::reset_all,
+        "Reverts every option to its default.");
 
     qpoases_solver.def(py::init<const Configuration&>(),
                        py::arg("configuration") = Configuration(),

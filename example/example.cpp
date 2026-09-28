@@ -18,11 +18,12 @@ namespace qpoases = marinholab::solvers::qpoases;
 
 int main()
 {
-    // 1. Configure the solver. Only a couple of fields are set here; the rest
+    // 1. Configure the solver. Only a couple of options are set here; the rest
     //    keep their defaults (which mirror qpOASES' own defaults for a
-    //    double-precision build).
+    //    double-precision build). The Configuration is string-keyed, so
+    //    options are set by name.
     qpoases::Configuration config;
-    config.terminationTolerance = 1.0e-9;  // tighter convergence
+    config.set("terminationTolerance", "1.0e-9");  // tighter convergence
 
     qpoases::Solver solver(config);
 

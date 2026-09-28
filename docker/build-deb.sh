@@ -42,7 +42,7 @@ namespace qpoases = marinholab::solvers::qpoases;
 int main()
 {
     qpoases::Configuration config;
-    config.terminationTolerance = 1.0e-9;
+    config.set(\"terminationTolerance\", \"1.0e-9\");
     qpoases::Solver solver(config);
     Eigen::MatrixXd H = Eigen::MatrixXd::Identity(2, 2);
     Eigen::VectorXd f(2); f << -1.0, -1.0;

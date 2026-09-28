@@ -3,153 +3,74 @@
 The real module is built from ``src/core.cpp``; this file only exists so that
 type checkers (e.g. Pyright) can understand the public surface of the
 extension without having to parse C++.
+
+The enum types (``BooleanType``, ``HessianType``, ``PrintLevel``,
+``SubjectToStatus``) are provided by the pure-Python module
+``_options.py`` and re-exported by the package ``__init__.py``; they are not
+part of the compiled extension.
 """
 
-from enum import IntEnum
+from typing import overload
+
+from collections.abc import Mapping
 
 import numpy as np
-
-
-class BooleanType(IntEnum):
-    """qpOASES logical values."""
-
-    BT_FALSE: BooleanType
-    BT_TRUE: BooleanType
-
-
-class HessianType(IntEnum):
-    """qpOASES Hessian definiteness types."""
-
-    HST_ZERO: HessianType
-    HST_IDENTITY: HessianType
-    HST_POSDEF: HessianType
-    HST_POSDEF_NULLSPACE: HessianType
-    HST_SEMIDEF: HessianType
-    HST_INDEF: HessianType
-    HST_UNKNOWN: HessianType
-
-
-class PrintLevel(IntEnum):
-    """qpOASES print levels, describing the amount of output at runtime."""
-
-    PL_DEBUG_ITER: PrintLevel
-    PL_TABULAR: PrintLevel
-    PL_NONE: PrintLevel
-    PL_LOW: PrintLevel
-    PL_MEDIUM: PrintLevel
-    PL_HIGH: PrintLevel
-
-
-class SubjectToStatus(IntEnum):
-    """qpOASES bound/constraint statuses."""
-
-    ST_LOWER: SubjectToStatus
-    ST_INACTIVE: SubjectToStatus
-    ST_UPPER: SubjectToStatus
-    ST_INFEASIBLE_LOWER: SubjectToStatus
-    ST_INFEASIBLE_UPPER: SubjectToStatus
-    ST_UNDEFINED: SubjectToStatus
 
 
 class qpOASES_Solver:
     """High-level, reusable solver for quadratic programs (QPs) based on qpOASES."""
 
-    # Nested aliases so the enums are also reachable as
-    # ``qpOASES_Solver.BooleanType`` etc. (matching the runtime layout, where
-    # ``export_values()`` binds them onto the class).
-    BooleanType: type[BooleanType] = BooleanType
-    HessianType: type[HessianType] = HessianType
-    PrintLevel: type[PrintLevel] = PrintLevel
-    SubjectToStatus: type[SubjectToStatus] = SubjectToStatus
-
     class Configuration:
-        """All user-configurable solver options.
+        """String-keyed holder of all user-configurable solver options.
 
-        Members are the 1:1 mapping of qpOASES' ``Options`` fields (plus the
-        wrapper-specific ``maximum_working_set_recalculations``,
-        ``use_hotstart`` and ``hessian_type``). Defaults match qpOASES'
-        double-precision defaults; see the C++ header (``include/qpOASES_solver.h``)
-        and the qpOASES manual for the meaning of each option.
+        Every qpOASES ``Options`` field plus the wrapper-specific
+        ``maximum_working_set_recalculations``, ``use_hotstart`` and
+        ``hessian_type`` is exposed under its name via ``set()``/``get()``.
+        Values are strings: booleans are ``"true"``/``"false"``, and enum
+        options take the enum value name (e.g. ``"HST_SEMIDEF"``,
+        ``"PL_NONE"``). Defaults match qpOASES' double-precision defaults
+        except ``printLevel`` (``"PL_NONE"``). See ``keys()`` and
+        ``defaults()`` for the full list.
         """
 
-        #: Maximum number of working set recalculations during the initial homotopy.
-        maximum_working_set_recalculations: int
-        #: Whether subsequent solves are warm-started instead of re-initialised.
-        use_hotstart: bool
-        #: qpOASES print level.
-        printLevel: PrintLevel
-        #: Enables the ramping strategy.
-        enableRamping: BooleanType
-        #: Enables the far bounds strategy.
-        enableFarBounds: BooleanType
-        #: Enables flipping of active bounds between lower and upper values.
-        enableFlippingBounds: BooleanType
-        #: Regularises the Hessian in case (semi-)definiteness is detected.
-        enableRegularisation: BooleanType
-        #: Uses the condition-hardened linear independence test.
-        enableFullLITests: BooleanType
-        #: Enables the nonzero curvature test.
-        enableNZCTests: BooleanType
-        #: Frequency of drift corrections (0 = off).
-        enableDriftCorrection: int
-        #: Frequency of full Cholesky refactorisation of the projected Hessian (0 = updates only).
-        enableCholeskyRefactorisation: int
-        #: Treats equality constraints as always active.
-        enableEqualities: BooleanType
-        #: Relative termination tolerance to stop the homotopy.
-        terminationTolerance: float
-        #: Lower/upper (constraints') bound tolerance.
-        boundTolerance: float
-        #: Offset for relaxing constraint bounds at the start of an initial homotopy.
-        boundRelaxation: float
-        #: Numerator tolerance for the ratio test.
-        epsNum: float
-        #: Denominator tolerance for the ratio test.
-        epsDen: float
-        #: Maximum allowed jump in primal variables during nonzero curvature tests.
-        maxPrimalJump: float
-        #: Maximum allowed jump in dual variables during linear independence tests.
-        maxDualJump: float
-        #: Start value of the ramping strategy.
-        initialRamping: float
-        #: Final value of the ramping strategy.
-        finalRamping: float
-        #: Initial size of the far bounds.
-        initialFarBounds: float
-        #: Growth factor applied to the far bounds.
-        growFarBounds: float
-        #: Status assumed for all bounds at the first iteration.
-        initialStatusBounds: SubjectToStatus
-        #: Tolerance of the squared Cholesky diagonal factor which triggers flipping a bound.
-        epsFlipping: float
-        #: Maximum number of successive regularisation steps.
-        numRegularisationSteps: int
-        #: Scaling factor of the identity matrix used for Hessian regularisation.
-        epsRegularisation: float
-        #: Maximum number of iterative refinement steps.
-        numRefinementSteps: int
-        #: Early termination tolerance for iterative refinement.
-        epsIterRef: float
-        #: Tolerance used by the linear independence tests.
-        epsLITests: float
-        #: Tolerance used by the nonzero curvature tests.
-        epsNZCTests: float
-        #: Minimum reciprocal condition number of the Schur complement before refactorisation is triggered.
-        rcondSMin: float
-        #: Repairs the working set when negative curvature is discovered during a hotstart.
-        enableInertiaCorrection: BooleanType
-        #: Whether infeasible constraints may be dropped.
-        enableDropInfeasibles: BooleanType
-        #: Priority used when dropping bounds.
-        dropBoundPriority: int
-        #: Priority used when dropping equality constraints.
-        dropEqConPriority: int
-        #: Priority used when dropping inequality constraints.
-        dropIneqConPriority: int
-        #: Definiteness assumed for the Hessian matrix.
-        hessian_type: HessianType
-
         def __init__(self) -> None: ...
+
+        @overload
+        def set(self, key: str, value: str) -> None:
+            """Sets the option ``key`` to the string ``value``."""
+            ...
+
+        @overload
+        def set(self, key: str, value: int | float | bool | object) -> None:
+            """Convenience overload: also accepts enum members (used via their
+            name), numbers, and bools, normalised to their string form.
+            (``object`` here represents e.g. an ``IntEnum`` member such as
+            ``HessianType.HST_SEMIDEF``.)"""
+            ...
+
+        def get(self, key: str) -> str:
+            """Returns the string value of ``key``, or its default if not set."""
+            ...
+
+        def has(self, key: str) -> bool:
+            """True if ``key`` has been explicitly set."""
+            ...
+
+        def keys(self) -> list[str]:
+            """Sorted list of all settable option names."""
+            ...
+
+        def defaults(self) -> Mapping[str, str]:
+            """Mapping of option name -> default string value."""
+            ...
+
+        def reset(self, key: str) -> None:
+            """Reverts ``key`` to its default."""
+            ...
+
+        def reset_all(self) -> None:
+            """Reverts every option to its default."""
+            ...
 
     def __init__(self, configuration: Configuration | None = None) -> None:
         """Constructs a solver with the given configuration (defaults to the default configuration)."""

@@ -10,13 +10,16 @@ an online active-set solver for quadratic programs.
 marinholab/solvers/qpoases/
   __init__.py            Public API re-exports (Solver, Configuration, enums)
   solver.py              numpy-friendly Solver wrapper
+  _options.py            Pure-Python IntEnum types (BooleanType, HessianType,
+                         PrintLevel, SubjectToStatus) that mirror the qpOASES
+                         enums accepted by Configuration.set()
   example.py             runnable example (console script: qpoases_example)
   example_kinematics.py  OPTIONAL example (needs dqrobotics + dqrobotics-pyplot)
   _core.pyi              type stub for the compiled _core extension (ships in the wheel)
   py.typed               PEP 561 marker so stubs are picked up by type checkers
-include/marinholab/solvers/qpoases.h C++ header (Solver + Configuration): `marinholab::solvers::qpoases::Solver` + `Configuration` (doxygen-documented)
-src/core.cpp             pybind11 module (_core): binds `Solver` + `Configuration` + enums
-src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver); compiled into the `marinholab_qpoases` library (shared by default, `-DBUILD_SHARED_LIBS=OFF` for static)
+include/marinholab/solvers/qpoases.h C++ header (Solver + Configuration) — qpOASES-free (pimpl Solver; string-keyed Configuration)
+src/core.cpp             pybind11 module (_core): binds `Solver` + string-based `Configuration` (set/get/has/keys/defaults/reset)
+src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver via pimpl); option name->string map; compiled into the `marinholab_qpoases` library (shared by default, `-DBUILD_SHARED_LIBS=OFF` for static)
 CMakeLists.txt           CMake build: `marinholab_qpoases` lib (shared by default), `_core` pybind11 module (`-DBUILD_PYTHON=ON`), optional C++ example (`-DBUILD_EXAMPLES=ON`). The vendored qpOASES is always built **static**, linked **PRIVATE** into `marinholab_qpoases`, and its archive is bundled/installed with the package — consumers only link `marinholab::solvers::qpoases`.
 example/example.cpp      standalone C++ usage example (target: `example_qpoases`)
 qpOASES/                 qpOASES (git submodule)
@@ -91,20 +94,26 @@ Configuration lives in `pyrightconfig.json` (`pythonVersion` 3.9,
   solver is quiet by default (qpOASES' own default is `PL_MEDIUM`). Do not
   silently override them here; if a
   particular problem needs a non-default option, set it on the
-  `Configuration` in the *caller* (e.g. `example.py:semidefinite()` sets
-  `hessian_type = HST_SEMIDEF` because its Hessian is rank-deficient).
-  Re-validate the `example.py` and `example_kinematics.py` solves after any
-  change to a default.
+  `Configuration` in the *caller* (e.g. `example.py:semidefinite()` does
+  `config.set("hessian_type", qpoases.HessianType.HST_SEMIDEF)` because its
+  Hessian is rank-deficient). Re-validate the `example.py` and
+  `example_kinematics.py` solves after any change to a default.
+- **String-keyed `Configuration`.** Options are set by name with a string
+  value (`set(key, value)`); the C++ public header exposes no qpOASES
+  types (qpOASES is reached only through the pimpl in
+  `src/core_function.cpp`). The qpOASES option keys keep the library's
+  native camelCase spelling (e.g. `enableFlippingBounds`,
+  `terminationTolerance`); only the wrapper-specific keys that have no
+  qpOASES counterpart are snake_case (`maximum_working_set_recalculations`,
+  `use_hotstart`, `hessian_type`). Enum options take the enum value name
+  (e.g. `HST_SEMIDEF`, `PL_NONE`); booleans are `"true"`/`"false"`. The
+  option name->kind map (`detail::option_kinds`) and the pure-Python enums
+  in `_options.py` must stay in sync with the `Configuration` options.
 - **`Solver` API.** `Solver.solve_quadratic_program()` accepts `None` for
   `A`/`b`/`Aeq`/`beq` and substitutes a single trivially-satisfied zero row;
   `Solver.get_active_set()` returns one entry per combined constraint row
   (-1 lower / 0 inactive / +1 upper).
 - **Style.** Match the existing style: docstrings on the public API.
-  `Configuration` fields that map to qpOASES `Options` fields keep the
-  library's native camelCase spelling (e.g. `enableFlippingBounds`,
-  `terminationTolerance`); only the wrapper-specific fields that have no
-  qpOASES counterpart are snake_case (`maximum_working_set_recalculations`,
-  `use_hotstart`, `hessian_type`).
 - **Doxygen.** C++ types and members are documented with Doxygen
   (`/** ... @brief ... @see ... */` blocks). Keep that when adding fields.
 - **Annotations.** All public Python API is fully type-annotated and must
