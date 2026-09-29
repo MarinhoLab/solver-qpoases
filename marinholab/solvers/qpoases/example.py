@@ -63,7 +63,7 @@ def positivedefinite() -> None:
 def semidefinite() -> None:
     # The Hessian here is positive semi-definite (rank deficient), so the
     # Hessian type must be set to HST_SEMIDEF; everything else stays at the
-    # defaults. The configuration is string-keyed, so options are set by name.
+    # defaults. Options are set by name.
     config = qpoases.Configuration()
     config.set("hessian_type", qpoases.HessianType.HST_SEMIDEF)
     solver = qpoases.Solver(config)

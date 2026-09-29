@@ -3,12 +3,11 @@
 
 pybind11 bindings for marinholab::solvers::qpoases::Solver.
 
-The `Configuration` is exposed with string-based accessors (`set`, `get`,
-`has`, `keys`, `defaults`, `reset`), backed by a map of option name ->
-string value, so the Python surface is free of qpOASES enum types. For
-convenience, `set()` also accepts Python enum members (e.g. a
-`HessianType`) or plain numbers/booleans and normalises them to the string
-form expected by the C++ core.
+The `Configuration` is exposed with accessors keyed by option name (`set`,
+`get`, `has`, `keys`, `defaults`, `reset`). Values are native Python bool,
+int, float, or str (enumeration values by name), so the Python surface is
+free of qpOASES enum types. `set()` also accepts Python enum members (e.g. a
+`HessianType`), which are passed by name.
 */
 
 #include <string>
@@ -30,36 +29,40 @@ namespace
 {
 
 /**
- * @brief Normalises an arbitrary Python value into the string form the C++
- * `Configuration::set()` expects.
+ * @brief Converts a Python value into an `OptionValue` for
+ * `Configuration::set()`, which then converts it to the option's kind.
  *
  * Accepts:
- *  - `str`              -> unchanged
+ *  - `bool`             -> bool (checked before int, since bool is an int)
  *  - an enum member     -> its `.name` (e.g. `HessianType.HST_SEMIDEF` ->
- *                          `"HST_SEMIDEF"`)
- *  - `bool`             -> `"true"` / `"false"`
- *  - `int`              -> its decimal representation
- *  - `float`            -> its repr
+ *                          `"HST_SEMIDEF"`; checked before int, since an
+ *                          `IntEnum` is an int)
+ *  - `int`, or anything with `__index__` (e.g. numpy integers) -> long long
+ *  - `float`, or anything with `__float__` (e.g. numpy floats) -> double
+ *  - `str`              -> str
  */
-std::string normalize_option_value(py::handle value)
+OptionValue to_option_value(py::handle value)
 {
+    if(py::isinstance<py::bool_>(value))
+        return value.cast<bool>();
+
+    // Leaked on purpose: a static py::object would be destroyed after the
+    // interpreter has shut down.
+    static const py::object* enum_type = new py::object(py::module_::import("enum").attr("Enum"));
+    if(py::isinstance(value, *enum_type))
+        return py::str(value.attr("name")).cast<std::string>();
+
     if(py::isinstance<py::str>(value))
         return value.cast<std::string>();
 
-    if(py::hasattr(value, "name"))
-        return py::str(value.attr("name")).cast<std::string>();
+    if(py::isinstance<py::int_>(value) || py::hasattr(value, "__index__"))
+        return py::int_(py::reinterpret_borrow<py::object>(value)).cast<long long>();
 
-    if(py::isinstance<py::bool_>(value))
-        return py::cast<bool>(value) ? "true" : "false";
-
-    if(py::isinstance<py::int_>(value))
-        return std::to_string(py::cast<long long>(value));
-
-    if(py::isinstance<py::float_>(value))
-        return py::str(value).cast<std::string>();
+    if(py::isinstance<py::float_>(value) || py::hasattr(value, "__float__"))
+        return py::float_(py::reinterpret_borrow<py::object>(value)).cast<double>();
 
     throw py::type_error(
-        "Option value must be a string, an enum member, a number, or a bool; "
+        "Option value must be a bool, an int, a float, a string, or an enum member; "
         "got " + py::str(value.get_type()).cast<std::string>());
 }
 
@@ -80,35 +83,31 @@ PYBIND11_MODULE(_core, m) {
         "default (see the `use_hotstart` option on the Configuration).");
 
     py::class_<Configuration> configuration(qpoases_solver, "Configuration",
-        "String-keyed holder of all user-configurable solver options.\n\n"
+        "Holder of all user-configurable solver options, keyed by name.\n\n"
         "Every qpOASES `Options` field plus the wrapper-specific settings\n"
         "(`maximum_working_set_recalculations`, `use_hotstart`,\n"
         "`hessian_type`) is exposed under its name via `set()`/`get()`.\n"
-        "Values are strings; booleans are \"true\"/\"false\", and enum\n"
-        "options take the enum value name (e.g. \"HST_SEMIDEF\", \"PL_NONE\").\n"
-        "Defaults match qpOASES' double-precision defaults except\n"
+        "Values are bool, int, float, or str: enum options take the enum\n"
+        "value name (e.g. \"HST_SEMIDEF\", \"PL_NONE\") or an enum member.\n"
+        "`set()` also converts strings such as \"1e-9\" or \"false\".\n"
+        "Unset options use qpOASES' double-precision defaults except\n"
         "`printLevel`, which defaults to \"PL_NONE\". See `keys()` and\n"
         "`defaults()` for the full list.");
 
     configuration.def(py::init<>());
     configuration.def("set",
-        [](Configuration& self, const std::string& key, const std::string& value) {
-            self.set(key, value);
-        },
-        py::arg("key"), py::arg("value"),
-        "Sets the option `key` to the string `value`. Raises ValueError for an "
-        "unknown key or a value that does not parse for that option's type.");
-    configuration.def("set",
         [](Configuration& self, const std::string& key, py::handle value) {
-            self.set(key, normalize_option_value(value));
+            self.set(key, to_option_value(value));
         },
         py::arg("key"), py::arg("value"),
-        "Convenience overload: also accepts enum members, numbers, and bools "
-        "(normalised to their string form).");
+        "Sets the option `key` to `value` (bool, int, float, str, or an enum "
+        "member), converted to the option's kind. Raises ValueError for an "
+        "unknown key or a value that does not convert to that kind.");
     configuration.def("get",
         &Configuration::get,
         py::arg("key"),
-        "Returns the string value of `key`, or its default if not set.");
+        "Returns the value of `key` (bool, int, float, or str), or its default "
+        "if not set.");
     configuration.def("has",
         &Configuration::has,
         py::arg("key"),
@@ -118,7 +117,7 @@ PYBIND11_MODULE(_core, m) {
         "Sorted list of all settable option names.");
     configuration.def("defaults",
         &Configuration::defaults,
-        "Mapping of option name -> default string value.");
+        "Mapping of option name -> default value.");
     configuration.def("reset",
         &Configuration::reset,
         py::arg("key"),

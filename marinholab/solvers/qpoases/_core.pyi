@@ -10,46 +10,45 @@ The enum types (``BooleanType``, ``HessianType``, ``PrintLevel``,
 part of the compiled extension.
 """
 
-from typing import overload
+from typing import Union
 
 from collections.abc import Mapping
+from enum import Enum
 
 import numpy as np
+
+OptionValue = Union[bool, int, float, str]
+"""An option value: bool, int, float, or an enum value name."""
 
 
 class qpOASES_Solver:
     """High-level, reusable solver for quadratic programs (QPs) based on qpOASES."""
 
     class Configuration:
-        """String-keyed holder of all user-configurable solver options.
+        """Holder of all user-configurable solver options, keyed by name.
 
         Every qpOASES ``Options`` field plus the wrapper-specific
         ``maximum_working_set_recalculations``, ``use_hotstart`` and
         ``hessian_type`` is exposed under its name via ``set()``/``get()``.
-        Values are strings: booleans are ``"true"``/``"false"``, and enum
-        options take the enum value name (e.g. ``"HST_SEMIDEF"``,
-        ``"PL_NONE"``). Defaults match qpOASES' double-precision defaults
-        except ``printLevel`` (``"PL_NONE"``). See ``keys()`` and
-        ``defaults()`` for the full list.
+        Values are bool, int, float, or str: enum options take the enum value
+        name (e.g. ``"HST_SEMIDEF"``, ``"PL_NONE"``) or an enum member.
+        ``set()`` also converts strings such as ``"1e-9"`` or ``"false"``.
+        Unset options use qpOASES' double-precision defaults except
+        ``printLevel`` (``"PL_NONE"``). See ``keys()`` and ``defaults()`` for
+        the full list.
         """
 
         def __init__(self) -> None: ...
 
-        @overload
-        def set(self, key: str, value: str) -> None:
-            """Sets the option ``key`` to the string ``value``."""
+        def set(self, key: str, value: Union[OptionValue, Enum]) -> None:
+            """Sets the option ``key`` to ``value`` (bool, int, float, str, or an
+            enum member such as ``HessianType.HST_SEMIDEF``), converted to the
+            option's kind. Raises ValueError for an unknown key or a value
+            that does not convert to that kind."""
             ...
 
-        @overload
-        def set(self, key: str, value: int | float | bool | object) -> None:
-            """Convenience overload: also accepts enum members (used via their
-            name), numbers, and bools, normalised to their string form.
-            (``object`` here represents e.g. an ``IntEnum`` member such as
-            ``HessianType.HST_SEMIDEF``.)"""
-            ...
-
-        def get(self, key: str) -> str:
-            """Returns the string value of ``key``, or its default if not set."""
+        def get(self, key: str) -> OptionValue:
+            """Returns the value of ``key``, or its default if not set."""
             ...
 
         def has(self, key: str) -> bool:
@@ -60,8 +59,8 @@ class qpOASES_Solver:
             """Sorted list of all settable option names."""
             ...
 
-        def defaults(self) -> Mapping[str, str]:
-            """Mapping of option name -> default string value."""
+        def defaults(self) -> Mapping[str, OptionValue]:
+            """Mapping of option name -> default value."""
             ...
 
         def reset(self, key: str) -> None:
