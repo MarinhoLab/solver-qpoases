@@ -6,9 +6,10 @@ Pure-Python enum types that mirror the qpOASES enumerations accepted by
 `Configuration.set()`.
 
 These live in Python (not in the compiled extension) so the C++ public
-header stays free of qpOASES types. Each member's *name* is the string that
-the string-based `Configuration` accepts (e.g. `HessianType.HST_SEMIDEF.name`
+header stays free of qpOASES types. Each member's *name* is the value that
+`Configuration` stores for the option (e.g. `HessianType.HST_SEMIDEF.name`
 -> `"HST_SEMIDEF"`), and its *value* matches the underlying qpOASES integer.
+`Configuration.set()` accepts the member itself or its name.
 """
 from __future__ import annotations
 

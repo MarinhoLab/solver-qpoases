@@ -119,7 +119,8 @@ _QPOASES_TOLERANCE_DEFAULTS = {
 def test_tolerance_defaults_match_qpoases(key: str, expected: float):
     # These were formatted with std::to_string (six decimals), which turned
     # every one of them into 0 and made qpOASES fail on well-posed QPs.
-    value = float(qpoases.Configuration().get(key))
+    value = qpoases.Configuration().get(key)
+    assert isinstance(value, float)
     assert value == pytest.approx(expected, rel=1e-12, abs=0.0)
 
 
@@ -170,3 +171,68 @@ for _ in range(3):
 """
     result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
     assert result.returncode == 0, (result.returncode, result.stderr[-2000:])
+
+
+def test_values_are_typed():
+    configuration = qpoases.Configuration()
+    assert configuration.get("enableRamping") is True
+    assert configuration.get("numRefinementSteps") == 1
+    assert type(configuration.get("numRefinementSteps")) is int
+    assert type(configuration.get("terminationTolerance")) is float
+    assert configuration.get("hessian_type") == "HST_POSDEF"
+    assert configuration.get("printLevel") == "PL_NONE"
+    defaults = configuration.defaults()
+    assert sorted(defaults) == configuration.keys()
+    assert {type(v) for v in defaults.values()} == {bool, int, float, str}
+
+
+@pytest.mark.parametrize("key,value,expected", [
+    ("terminationTolerance", 1.0e-9, 1.0e-9),
+    ("terminationTolerance", "1.0e-9", 1.0e-9),
+    ("terminationTolerance", 2, 2.0),
+    ("terminationTolerance", np.float64(3.0e-9), 3.0e-9),
+    ("numRefinementSteps", 3, 3),
+    ("numRefinementSteps", "3", 3),
+    ("numRefinementSteps", np.int64(4), 4),
+    ("enableRamping", False, False),
+    ("enableRamping", "false", False),
+    ("hessian_type", qpoases.HessianType.HST_SEMIDEF, "HST_SEMIDEF"),
+    ("hessian_type", "HST_SEMIDEF", "HST_SEMIDEF"),
+    ("printLevel", qpoases.PrintLevel.PL_LOW, "PL_LOW"),
+])
+def test_set_converts_to_the_option_kind(key: str, value, expected):
+    configuration = qpoases.Configuration()
+    configuration.set(key, value)
+    assert configuration.has(key)
+    got = configuration.get(key)
+    assert got == expected and type(got) is type(expected)
+
+
+@pytest.mark.parametrize("key,value", [
+    ("numRefinementSteps", 1.5),
+    ("numRefinementSteps", "1.5"),
+    ("enableRamping", 1.0),
+    ("enableRamping", "maybe"),
+    ("terminationTolerance", True),
+    ("terminationTolerance", "small"),
+    ("hessian_type", 4),
+    ("hessian_type", "HST_NOPE"),
+    ("no_such_option", 1),
+])
+def test_set_rejects_values_of_the_wrong_kind(key: str, value):
+    configuration = qpoases.Configuration()
+    with pytest.raises(ValueError):
+        configuration.set(key, value)
+    if key != "no_such_option":
+        assert not configuration.has(key)
+
+
+def test_string_and_number_give_the_same_solution():
+    rng = np.random.default_rng(2)
+    H, f, A, b = _random_problem(rng, 5, 8)
+    solutions = []
+    for value in (1.0e-9, "1.0e-9"):
+        configuration = qpoases.Configuration()
+        configuration.set("terminationTolerance", value)
+        solutions.append(qpoases.Solver(configuration).solve_quadratic_program(H, f, A, b, None, None))
+    assert np.array_equal(solutions[0], solutions[1])
