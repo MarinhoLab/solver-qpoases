@@ -5,10 +5,8 @@ Originally by Murilo M. Marinho
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
-#include <iomanip>
-#include <locale>
-#include <sstream>
 #include <stdexcept>
+#include <variant>
 
 #include <marinholab/solvers/qpoases.h>
 
@@ -119,14 +117,14 @@ inline bool parse_bool(const std::string& value)
 /**
  * @brief Parses an integer string.
  */
-inline int parse_int(const std::string& value)
+inline long long parse_int(const std::string& value)
 {
     const char* begin = value.c_str();
     char* end = nullptr;
-    const long parsed = std::strtol(begin, &end, 10);
+    const long long parsed = std::strtoll(begin, &end, 10);
     if(begin == end || *end != '\0')
         throw std::invalid_argument("Invalid integer value '" + value + "'.");
-    return static_cast<int>(parsed);
+    return parsed;
 }
 
 /**
@@ -160,105 +158,163 @@ inline T parse_enum(const std::string& key, const std::string& value,
     return it->second;
 }
 
-/**
- * @brief Formats a real so that it reads back exactly.
- *
- * std::to_string prints six decimals, which turns qpOASES' small tolerances
- * (e.g. epsNum = -1e3 * EPS) into zero. 15 significant digits are tried
- * first for a short string, then 17, which always round-trips a double.
- * (snprintf is avoided: qpOASES defines it as a macro for _snprintf on MSVC.)
- */
-inline std::string real_to_string(double value)
+/** @brief Names of the qpOASES `PrintLevel` values. */
+inline const std::map<std::string, PrintLevel>& print_levels()
 {
-    std::string text;
-    for (int precision : {15, 17})
-    {
-        std::ostringstream stream;
-        stream.imbue(std::locale::classic());
-        stream << std::setprecision(precision) << value;
-        text = stream.str();
-        std::istringstream back(text);
-        back.imbue(std::locale::classic());
-        double parsed = 0.0;
-        back >> parsed;
-        if (parsed == value)
-            break;
-    }
-    return text;
+    static const std::map<std::string, PrintLevel> values = {
+        {"PL_DEBUG_ITER", PL_DEBUG_ITER},
+        {"PL_TABULAR", PL_TABULAR},
+        {"PL_NONE", PL_NONE},
+        {"PL_LOW", PL_LOW},
+        {"PL_MEDIUM", PL_MEDIUM},
+        {"PL_HIGH", PL_HIGH},
+    };
+    return values;
+}
+
+/** @brief Names of the qpOASES `HessianType` values. */
+inline const std::map<std::string, HessianType>& hessian_types()
+{
+    static const std::map<std::string, HessianType> values = {
+        {"HST_ZERO", HST_ZERO},
+        {"HST_IDENTITY", HST_IDENTITY},
+        {"HST_POSDEF", HST_POSDEF},
+        {"HST_POSDEF_NULLSPACE", HST_POSDEF_NULLSPACE},
+        {"HST_SEMIDEF", HST_SEMIDEF},
+        {"HST_INDEF", HST_INDEF},
+        {"HST_UNKNOWN", HST_UNKNOWN},
+    };
+    return values;
+}
+
+/** @brief Names of the qpOASES `SubjectToStatus` values. */
+inline const std::map<std::string, SubjectToStatus>& subject_to_statuses()
+{
+    static const std::map<std::string, SubjectToStatus> values = {
+        {"ST_LOWER", ST_LOWER},
+        {"ST_INACTIVE", ST_INACTIVE},
+        {"ST_UPPER", ST_UPPER},
+        {"ST_INFEASIBLE_LOWER", ST_INFEASIBLE_LOWER},
+        {"ST_INFEASIBLE_UPPER", ST_INFEASIBLE_UPPER},
+        {"ST_UNDEFINED", ST_UNDEFINED},
+    };
+    return values;
 }
 
 /**
- * @brief The default value of `key`, as a string, from qpOASES itself.
+ * @brief The name of an enumeration value, from one of the tables above.
  */
-inline std::string default_for(const std::string& key)
+template <typename T>
+inline std::string name_of(const std::map<std::string, T>& names, T value)
 {
-    static const std::map<std::string, std::string> defaults = [] {
+    for(const auto& pair : names)
+        if(pair.second == value)
+            return pair.first;
+    throw std::logic_error("Enumeration value without a name.");
+}
+
+/**
+ * @brief Converts `value` to the kind of option `key`.
+ *
+ * Booleans accept `bool` or "true"/"false"; integers accept `long long` or
+ * an integer literal; reals accept `double`, `long long` or a
+ * floating-point literal; enumerations accept a value name.
+ */
+inline OptionValue normalize(const std::string& key, const OptionValue& value)
+{
+    const auto wrong_type = [&key](const std::string& expected) {
+        return std::invalid_argument("Invalid value for option '" + key + "': expected " + expected + ".");
+    };
+    const auto* text = std::get_if<std::string>(&value);
+    switch(option_kinds().at(key)) {
+        case OptionKind::Boolean:
+            if(const auto* b = std::get_if<bool>(&value))
+                return *b;
+            if(text)
+                return parse_bool(*text);
+            throw wrong_type("a bool");
+        case OptionKind::Integer:
+            if(const auto* i = std::get_if<long long>(&value))
+                return *i;
+            if(text)
+                return parse_int(*text);
+            throw wrong_type("an integer");
+        case OptionKind::Real:
+            if(const auto* d = std::get_if<double>(&value))
+                return *d;
+            if(const auto* i = std::get_if<long long>(&value))
+                return static_cast<double>(*i);
+            if(text)
+                return parse_real(*text);
+            throw wrong_type("a real number");
+        case OptionKind::PrintLevel:
+            if(text)
+                return name_of(print_levels(), parse_enum(key, *text, print_levels()));
+            throw wrong_type("a PrintLevel name, e.g. \"PL_NONE\"");
+        case OptionKind::HessianType:
+            if(text)
+                return name_of(hessian_types(), parse_enum(key, *text, hessian_types()));
+            throw wrong_type("a HessianType name, e.g. \"HST_POSDEF\"");
+        case OptionKind::SubjectToStatus:
+            if(text)
+                return name_of(subject_to_statuses(), parse_enum(key, *text, subject_to_statuses()));
+            throw wrong_type("a SubjectToStatus name, e.g. \"ST_LOWER\"");
+    }
+    throw std::logic_error("Unhandled option kind.");
+}
+
+/**
+ * @brief Every option's default value, taken directly from qpOASES.
+ */
+inline const std::map<std::string, OptionValue>& default_values()
+{
+    static const std::map<std::string, OptionValue> defaults = [] {
         Options options;  // default-constructed = setToDefault()
-        options.printLevel = PL_NONE;  // quiet by default (see Configuration)
-        std::map<std::string, std::string> d;
-        d["maximum_working_set_recalculations"] = "150";
-        d["use_hotstart"] = "true";
-        d["hessian_type"] = "HST_POSDEF";
-        d["printLevel"] = [&] {
-            const char* name = "PL_NONE";
-            switch(options.printLevel) {
-                case PL_DEBUG_ITER: name = "PL_DEBUG_ITER"; break;
-                case PL_TABULAR: name = "PL_TABULAR"; break;
-                case PL_NONE: name = "PL_NONE"; break;
-                case PL_LOW: name = "PL_LOW"; break;
-                case PL_MEDIUM: name = "PL_MEDIUM"; break;
-                case PL_HIGH: name = "PL_HIGH"; break;
-            }
-            return std::string(name);
-        }();
-        d["enableRamping"] = options.enableRamping == BT_TRUE ? "true" : "false";
-        d["enableFarBounds"] = options.enableFarBounds == BT_TRUE ? "true" : "false";
-        d["enableFlippingBounds"] = options.enableFlippingBounds == BT_TRUE ? "true" : "false";
-        d["enableRegularisation"] = options.enableRegularisation == BT_TRUE ? "true" : "false";
-        d["enableFullLITests"] = options.enableFullLITests == BT_TRUE ? "true" : "false";
-        d["enableNZCTests"] = options.enableNZCTests == BT_TRUE ? "true" : "false";
-        d["enableDriftCorrection"] = std::to_string(options.enableDriftCorrection);
-        d["enableCholeskyRefactorisation"] = std::to_string(options.enableCholeskyRefactorisation);
-        d["enableEqualities"] = options.enableEqualities == BT_TRUE ? "true" : "false";
-        d["terminationTolerance"] = real_to_string(options.terminationTolerance);
-        d["boundTolerance"] = real_to_string(options.boundTolerance);
-        d["boundRelaxation"] = real_to_string(options.boundRelaxation);
-        d["epsNum"] = real_to_string(options.epsNum);
-        d["epsDen"] = real_to_string(options.epsDen);
-        d["maxPrimalJump"] = real_to_string(options.maxPrimalJump);
-        d["maxDualJump"] = real_to_string(options.maxDualJump);
-        d["initialRamping"] = real_to_string(options.initialRamping);
-        d["finalRamping"] = real_to_string(options.finalRamping);
-        d["initialFarBounds"] = real_to_string(options.initialFarBounds);
-        d["growFarBounds"] = real_to_string(options.growFarBounds);
-        d["initialStatusBounds"] = [&] {
-            const char* name = "ST_LOWER";
-            switch(options.initialStatusBounds) {
-                case ST_LOWER: name = "ST_LOWER"; break;
-                case ST_INACTIVE: name = "ST_INACTIVE"; break;
-                case ST_UPPER: name = "ST_UPPER"; break;
-                case ST_INFEASIBLE_LOWER: name = "ST_INFEASIBLE_LOWER"; break;
-                case ST_INFEASIBLE_UPPER: name = "ST_INFEASIBLE_UPPER"; break;
-                case ST_UNDEFINED: name = "ST_UNDEFINED"; break;
-            }
-            return std::string(name);
-        }();
-        d["epsFlipping"] = real_to_string(options.epsFlipping);
-        d["numRegularisationSteps"] = std::to_string(options.numRegularisationSteps);
-        d["epsRegularisation"] = real_to_string(options.epsRegularisation);
-        d["numRefinementSteps"] = std::to_string(options.numRefinementSteps);
-        d["epsIterRef"] = real_to_string(options.epsIterRef);
-        d["epsLITests"] = real_to_string(options.epsLITests);
-        d["epsNZCTests"] = real_to_string(options.epsNZCTests);
-        d["rcondSMin"] = real_to_string(options.rcondSMin);
-        d["enableInertiaCorrection"] = options.enableInertiaCorrection == BT_TRUE ? "true" : "false";
-        d["enableDropInfeasibles"] = options.enableDropInfeasibles == BT_TRUE ? "true" : "false";
-        d["dropBoundPriority"] = std::to_string(options.dropBoundPriority);
-        d["dropEqConPriority"] = std::to_string(options.dropEqConPriority);
-        d["dropIneqConPriority"] = std::to_string(options.dropIneqConPriority);
+        const auto boolean = [](BooleanType value) { return value == BT_TRUE; };
+        const auto integer = [](int_t value) { return static_cast<long long>(value); };
+        const auto real = [](real_t value) { return static_cast<double>(value); };
+        std::map<std::string, OptionValue> d;
+        d["maximum_working_set_recalculations"] = 150LL;
+        d["use_hotstart"] = true;
+        d["hessian_type"] = std::string("HST_POSDEF");
+        d["printLevel"] = std::string("PL_NONE");  // quiet by default (see Configuration)
+        d["enableRamping"] = boolean(options.enableRamping);
+        d["enableFarBounds"] = boolean(options.enableFarBounds);
+        d["enableFlippingBounds"] = boolean(options.enableFlippingBounds);
+        d["enableRegularisation"] = boolean(options.enableRegularisation);
+        d["enableFullLITests"] = boolean(options.enableFullLITests);
+        d["enableNZCTests"] = boolean(options.enableNZCTests);
+        d["enableDriftCorrection"] = integer(options.enableDriftCorrection);
+        d["enableCholeskyRefactorisation"] = integer(options.enableCholeskyRefactorisation);
+        d["enableEqualities"] = boolean(options.enableEqualities);
+        d["terminationTolerance"] = real(options.terminationTolerance);
+        d["boundTolerance"] = real(options.boundTolerance);
+        d["boundRelaxation"] = real(options.boundRelaxation);
+        d["epsNum"] = real(options.epsNum);
+        d["epsDen"] = real(options.epsDen);
+        d["maxPrimalJump"] = real(options.maxPrimalJump);
+        d["maxDualJump"] = real(options.maxDualJump);
+        d["initialRamping"] = real(options.initialRamping);
+        d["finalRamping"] = real(options.finalRamping);
+        d["initialFarBounds"] = real(options.initialFarBounds);
+        d["growFarBounds"] = real(options.growFarBounds);
+        d["initialStatusBounds"] = name_of(subject_to_statuses(), options.initialStatusBounds);
+        d["epsFlipping"] = real(options.epsFlipping);
+        d["numRegularisationSteps"] = integer(options.numRegularisationSteps);
+        d["epsRegularisation"] = real(options.epsRegularisation);
+        d["numRefinementSteps"] = integer(options.numRefinementSteps);
+        d["epsIterRef"] = real(options.epsIterRef);
+        d["epsLITests"] = real(options.epsLITests);
+        d["epsNZCTests"] = real(options.epsNZCTests);
+        d["rcondSMin"] = real(options.rcondSMin);
+        d["enableInertiaCorrection"] = boolean(options.enableInertiaCorrection);
+        d["enableDropInfeasibles"] = boolean(options.enableDropInfeasibles);
+        d["dropBoundPriority"] = integer(options.dropBoundPriority);
+        d["dropEqConPriority"] = integer(options.dropEqConPriority);
+        d["dropIneqConPriority"] = integer(options.dropIneqConPriority);
         return d;
     }();
-    return defaults.at(key);
+    return defaults;
 }
 
 } // namespace detail
@@ -272,64 +328,27 @@ Configuration::Configuration(const Configuration& other) = default;
 Configuration& Configuration::operator=(const Configuration& other) = default;
 Configuration::~Configuration() = default;
 
-void Configuration::set(const std::string& key, const std::string& value)
+void Configuration::set(const std::string& key, const OptionValue& value)
 {
     if(!detail::is_known_option(key))
         throw std::invalid_argument("Unknown option '" + key + "'. Use keys() for the valid option names.");
-    // Validate the value up-front so type errors surface at set-time.
-    switch(detail::option_kinds().at(key)) {
-        case OptionKind::Boolean:
-            detail::parse_bool(value);
-            break;
-        case OptionKind::Integer:
-            detail::parse_int(value);
-            break;
-        case OptionKind::Real:
-            detail::parse_real(value);
-            break;
-        case OptionKind::PrintLevel:
-            detail::parse_enum<PrintLevel>(key, value, {
-                {"PL_DEBUG_ITER", PL_DEBUG_ITER},
-                {"PL_TABULAR", PL_TABULAR},
-                {"PL_NONE", PL_NONE},
-                {"PL_LOW", PL_LOW},
-                {"PL_MEDIUM", PL_MEDIUM},
-                {"PL_HIGH", PL_HIGH},
-            });
-            break;
-        case OptionKind::HessianType:
-            detail::parse_enum<HessianType>(key, value, {
-                {"HST_ZERO", HST_ZERO},
-                {"HST_IDENTITY", HST_IDENTITY},
-                {"HST_POSDEF", HST_POSDEF},
-                {"HST_POSDEF_NULLSPACE", HST_POSDEF_NULLSPACE},
-                {"HST_SEMIDEF", HST_SEMIDEF},
-                {"HST_INDEF", HST_INDEF},
-                {"HST_UNKNOWN", HST_UNKNOWN},
-            });
-            break;
-        case OptionKind::SubjectToStatus:
-            detail::parse_enum<SubjectToStatus>(key, value, {
-                {"ST_LOWER", ST_LOWER},
-                {"ST_INACTIVE", ST_INACTIVE},
-                {"ST_UPPER", ST_UPPER},
-                {"ST_INFEASIBLE_LOWER", ST_INFEASIBLE_LOWER},
-                {"ST_INFEASIBLE_UPPER", ST_INFEASIBLE_UPPER},
-                {"ST_UNDEFINED", ST_UNDEFINED},
-            });
-            break;
-    }
-    options_[key] = value;
+    // Validate and convert up-front so type errors surface at set-time.
+    options_[key] = detail::normalize(key, value);
 }
 
-std::string Configuration::get(const std::string& key) const
+void Configuration::set(const std::string& key, const char* value)
+{
+    set(key, OptionValue(std::string(value)));
+}
+
+OptionValue Configuration::get(const std::string& key) const
 {
     if(!detail::is_known_option(key))
         throw std::invalid_argument("Unknown option '" + key + "'.");
     const auto it = options_.find(key);
     if(it != options_.end())
         return it->second;
-    return detail::default_for(key);
+    return detail::default_values().at(key);
 }
 
 bool Configuration::has(const std::string& key) const
@@ -361,13 +380,9 @@ void Configuration::reset_all()
     options_.clear();
 }
 
-std::map<std::string, std::string> Configuration::defaults() const
+std::map<std::string, OptionValue> Configuration::defaults() const
 {
-    const auto& kinds = detail::option_kinds();
-    std::map<std::string, std::string> out;
-    for(const auto& pair : kinds)
-        out.emplace(pair.first, detail::default_for(pair.first));
-    return out;
+    return detail::default_values();
 }
 
 // ---------------------------------------------------------------------------
@@ -427,94 +442,79 @@ namespace detail
 {
 
 /**
- * @brief Maps every option of the wrapper configuration onto a qpOASES
- * `Options` object.
+ * @brief Builds the qpOASES `Options`: qpOASES' own defaults, the wrapper's
+ * quieter `printLevel`, and then every option that was explicitly set.
  */
 inline Options options_from(const Configuration& configuration)
 {
-    Options options;
-    const auto get_int = [&configuration](const std::string& key) {
-        return parse_int(configuration.get(key));
+    Options options;  // qpOASES' defaults
+    options.printLevel = PL_NONE;  // the wrapper's default (see Configuration)
+    const auto real = [&configuration](const std::string& key, real_t& field) {
+        if(configuration.has(key))
+            field = static_cast<real_t>(std::get<double>(configuration.get(key)));
     };
-    const auto get_real = [&configuration](const std::string& key) {
-        return static_cast<real_t>(parse_real(configuration.get(key)));
+    const auto integer = [&configuration](const std::string& key, int_t& field) {
+        if(configuration.has(key))
+            field = static_cast<int_t>(std::get<long long>(configuration.get(key)));
     };
-    const auto get_bool = [&configuration](const std::string& key) {
-        return parse_bool(configuration.get(key)) ? BT_TRUE : BT_FALSE;
+    const auto boolean = [&configuration](const std::string& key, BooleanType& field) {
+        if(configuration.has(key))
+            field = std::get<bool>(configuration.get(key)) ? BT_TRUE : BT_FALSE;
     };
-    options.printLevel = parse_enum<PrintLevel>("printLevel", configuration.get("printLevel"), {
-        {"PL_DEBUG_ITER", PL_DEBUG_ITER},
-        {"PL_TABULAR", PL_TABULAR},
-        {"PL_NONE", PL_NONE},
-        {"PL_LOW", PL_LOW},
-        {"PL_MEDIUM", PL_MEDIUM},
-        {"PL_HIGH", PL_HIGH},
-    });
-    options.enableRamping = get_bool("enableRamping");
-    options.enableFarBounds = get_bool("enableFarBounds");
-    options.enableFlippingBounds = get_bool("enableFlippingBounds");
-    options.enableRegularisation = get_bool("enableRegularisation");
-    options.enableFullLITests = get_bool("enableFullLITests");
-    options.enableNZCTests = get_bool("enableNZCTests");
-    options.enableDriftCorrection = get_int("enableDriftCorrection");
-    options.enableCholeskyRefactorisation = get_int("enableCholeskyRefactorisation");
-    options.enableEqualities = get_bool("enableEqualities");
-    options.terminationTolerance = get_real("terminationTolerance");
-    options.boundTolerance = get_real("boundTolerance");
-    options.boundRelaxation = get_real("boundRelaxation");
-    options.epsNum = get_real("epsNum");
-    options.epsDen = get_real("epsDen");
-    options.maxPrimalJump = get_real("maxPrimalJump");
-    options.maxDualJump = get_real("maxDualJump");
-    options.initialRamping = get_real("initialRamping");
-    options.finalRamping = get_real("finalRamping");
-    options.initialFarBounds = get_real("initialFarBounds");
-    options.growFarBounds = get_real("growFarBounds");
-    options.initialStatusBounds = parse_enum<SubjectToStatus>("initialStatusBounds", configuration.get("initialStatusBounds"), {
-        {"ST_LOWER", ST_LOWER},
-        {"ST_INACTIVE", ST_INACTIVE},
-        {"ST_UPPER", ST_UPPER},
-        {"ST_INFEASIBLE_LOWER", ST_INFEASIBLE_LOWER},
-        {"ST_INFEASIBLE_UPPER", ST_INFEASIBLE_UPPER},
-        {"ST_UNDEFINED", ST_UNDEFINED},
-    });
-    options.epsFlipping = get_real("epsFlipping");
-    options.numRegularisationSteps = get_int("numRegularisationSteps");
-    options.epsRegularisation = get_real("epsRegularisation");
-    options.numRefinementSteps = get_int("numRefinementSteps");
-    options.epsIterRef = get_real("epsIterRef");
-    options.epsLITests = get_real("epsLITests");
-    options.epsNZCTests = get_real("epsNZCTests");
-    options.rcondSMin = get_real("rcondSMin");
-    options.enableInertiaCorrection = get_bool("enableInertiaCorrection");
-    options.enableDropInfeasibles = get_bool("enableDropInfeasibles");
-    options.dropBoundPriority = get_int("dropBoundPriority");
-    options.dropEqConPriority = get_int("dropEqConPriority");
-    options.dropIneqConPriority = get_int("dropIneqConPriority");
+    if(configuration.has("printLevel"))
+        options.printLevel = print_levels().at(std::get<std::string>(configuration.get("printLevel")));
+    boolean("enableRamping", options.enableRamping);
+    boolean("enableFarBounds", options.enableFarBounds);
+    boolean("enableFlippingBounds", options.enableFlippingBounds);
+    boolean("enableRegularisation", options.enableRegularisation);
+    boolean("enableFullLITests", options.enableFullLITests);
+    boolean("enableNZCTests", options.enableNZCTests);
+    integer("enableDriftCorrection", options.enableDriftCorrection);
+    integer("enableCholeskyRefactorisation", options.enableCholeskyRefactorisation);
+    boolean("enableEqualities", options.enableEqualities);
+    real("terminationTolerance", options.terminationTolerance);
+    real("boundTolerance", options.boundTolerance);
+    real("boundRelaxation", options.boundRelaxation);
+    real("epsNum", options.epsNum);
+    real("epsDen", options.epsDen);
+    real("maxPrimalJump", options.maxPrimalJump);
+    real("maxDualJump", options.maxDualJump);
+    real("initialRamping", options.initialRamping);
+    real("finalRamping", options.finalRamping);
+    real("initialFarBounds", options.initialFarBounds);
+    real("growFarBounds", options.growFarBounds);
+    if(configuration.has("initialStatusBounds"))
+        options.initialStatusBounds = subject_to_statuses().at(
+            std::get<std::string>(configuration.get("initialStatusBounds")));
+    real("epsFlipping", options.epsFlipping);
+    integer("numRegularisationSteps", options.numRegularisationSteps);
+    real("epsRegularisation", options.epsRegularisation);
+    integer("numRefinementSteps", options.numRefinementSteps);
+    real("epsIterRef", options.epsIterRef);
+    real("epsLITests", options.epsLITests);
+    real("epsNZCTests", options.epsNZCTests);
+    real("rcondSMin", options.rcondSMin);
+    boolean("enableInertiaCorrection", options.enableInertiaCorrection);
+    boolean("enableDropInfeasibles", options.enableDropInfeasibles);
+    integer("dropBoundPriority", options.dropBoundPriority);
+    integer("dropEqConPriority", options.dropEqConPriority);
+    integer("dropIneqConPriority", options.dropIneqConPriority);
     return options;
 }
 
 inline HessianType hessian_type_from(const Configuration& configuration)
 {
-    return parse_enum<HessianType>("hessian_type", configuration.get("hessian_type"), {
-        {"HST_ZERO", HST_ZERO},
-        {"HST_IDENTITY", HST_IDENTITY},
-        {"HST_POSDEF", HST_POSDEF},
-        {"HST_POSDEF_NULLSPACE", HST_POSDEF_NULLSPACE},
-        {"HST_SEMIDEF", HST_SEMIDEF},
-        {"HST_INDEF", HST_INDEF},
-        {"HST_UNKNOWN", HST_UNKNOWN},
-    });
+    return hessian_types().at(std::get<std::string>(configuration.get("hessian_type")));
 }
 
 inline int maximum_working_set_recalculations_from(const Configuration& configuration)
 {
-    return parse_int(configuration.get("maximum_working_set_recalculations"));
+    return static_cast<int>(std::get<long long>(configuration.get("maximum_working_set_recalculations")));
 }
 
 inline bool use_hotstart_from(const Configuration& configuration)
 {
-    return parse_bool(configuration.get("use_hotstart"));
+    return std::get<bool>(configuration.get("use_hotstart"));
 }
 
 inline void evaluate_problem_return_value(returnValue problem_return_value)

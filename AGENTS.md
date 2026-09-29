@@ -17,8 +17,8 @@ marinholab/solvers/qpoases/
   example_kinematics.py  OPTIONAL example (needs dqrobotics + dqrobotics-pyplot)
   _core.pyi              type stub for the compiled _core extension (ships in the wheel)
   py.typed               PEP 561 marker so stubs are picked up by type checkers
-include/marinholab/solvers/qpoases.h C++ header (Solver + Configuration) — qpOASES-free (pimpl Solver; string-keyed Configuration)
-src/core.cpp             pybind11 module (_core): binds `Solver` + string-based `Configuration` (set/get/has/keys/defaults/reset)
+include/marinholab/solvers/qpoases.h C++ header (Solver + Configuration) — qpOASES-free (pimpl Solver; Configuration keyed by name with typed `OptionValue`s)
+src/core.cpp             pybind11 module (_core): binds `Solver` + `Configuration` (set/get/has/keys/defaults/reset) with native Python values
 src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver via pimpl); option name->string map; compiled into the `marinholab_qpoases` library (shared by default, `-DBUILD_SHARED_LIBS=OFF` for static)
 CMakeLists.txt           CMake build: `marinholab_qpoases` lib (shared by default), `_core` pybind11 module (`-DBUILD_PYTHON=ON`), optional C++ example (`-DBUILD_EXAMPLES=ON`). The vendored qpOASES is always built **static**, linked **PRIVATE** into `marinholab_qpoases`, and its archive is bundled/installed with the package — consumers only link `marinholab::solvers::qpoases`.
 example/example.cpp      standalone C++ usage example (target: `example_qpoases`)
@@ -115,24 +115,29 @@ Configuration lives in `pyrightconfig.json` (`pythonVersion` 3.9,
   `config.set("hessian_type", qpoases.HessianType.HST_SEMIDEF)` because its
   Hessian is rank-deficient). Re-validate the `example.py` and
   `example_kinematics.py` solves after any change to a default.
-- **Real-valued defaults must round-trip.** Format them with
-  `detail::real_to_string` (`%.15g`, falling back to `%.17g`), never
-  `std::to_string`: its six decimals turned every small qpOASES tolerance
-  (`terminationTolerance`, `epsNum`, `epsLITests`, ...) into 0, and qpOASES
-  then failed on well-posed QPs (errors 36/68). `test_tolerance_defaults_match_qpoases`
-  checks them.
+- **Option values are typed, never round-tripped through text.**
+  `Configuration` stores `OptionValue = std::variant<bool, long long, double,
+  std::string>`, converted to the option's kind in `set()`
+  (`detail::normalize`). Defaults come straight from qpOASES' `Options`
+  (`detail::default_values`), and `options_from()` starts from qpOASES'
+  `Options`, applies the quieter `printLevel`, then only the options that were
+  set. Storing values as strings once turned every small qpOASES tolerance
+  (`terminationTolerance`, `epsNum`, `epsLITests`, ...) into 0 via
+  `std::to_string`, and qpOASES then failed on well-posed QPs (errors 36/68);
+  `test_tolerance_defaults_match_qpoases` checks them.
 - **Variable bounds are passed explicitly** as -INFTY/+INFTY arrays, never
   `NULL`: with `enableFarBounds` off, qpOASES' `hotstart()` dereferences them
   without a NULL check.
-- **String-keyed `Configuration`.** Options are set by name with a string
-  value (`set(key, value)`); the C++ public header exposes no qpOASES
-  types (qpOASES is reached only through the pimpl in
-  `src/core_function.cpp`). The qpOASES option keys keep the library's
+- **`Configuration` keyed by name.** Options are set by name
+  (`set(key, value)`); the C++ public header exposes no qpOASES types
+  (qpOASES is reached only through the pimpl in `src/core_function.cpp`), so
+  enumeration values are held by name. The qpOASES option keys keep the library's
   native camelCase spelling (e.g. `enableFlippingBounds`,
   `terminationTolerance`); only the wrapper-specific keys that have no
   qpOASES counterpart are snake_case (`maximum_working_set_recalculations`,
   `use_hotstart`, `hessian_type`). Enum options take the enum value name
-  (e.g. `HST_SEMIDEF`, `PL_NONE`); booleans are `"true"`/`"false"`. The
+  (e.g. `HST_SEMIDEF`, `PL_NONE`) or, in Python, an enum member; `set()` also
+  converts strings for the other kinds (`"1e-9"`, `"false"`). The
   option name->kind map (`detail::option_kinds`) and the pure-Python enums
   in `_options.py` must stay in sync with the `Configuration` options.
 - **`Solver` API.** `Solver.solve_quadratic_program()` accepts `None` for

@@ -20,10 +20,10 @@ int main()
 {
     // 1. Configure the solver. Only a couple of options are set here; the rest
     //    keep their defaults (which mirror qpOASES' own defaults for a
-    //    double-precision build). The Configuration is string-keyed, so
-    //    options are set by name.
+    //    double-precision build). Options are set by name, with a value of
+    //    the option's kind.
     qpoases::Configuration config;
-    config.set("terminationTolerance", "1.0e-9");  // tighter convergence
+    config.set("terminationTolerance", 1.0e-9);  // tighter convergence
 
     qpoases::Solver solver(config);
 

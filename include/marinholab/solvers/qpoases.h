@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -17,21 +18,35 @@ namespace qpoases
 {
 
 /**
+ * @brief The value of an option: a boolean, an integer, a real, or the
+ *        name of an enumeration value (e.g. "HST_SEMIDEF", "PL_NONE").
+ *
+ * Enumeration values are held by name so that this header stays free of
+ * qpOASES types.
+ */
+using OptionValue = std::variant<bool, long long, double, std::string>;
+
+/**
  * @brief Holds all user-configurable solver options, keyed by name.
  *
  * Every qpOASES `Options` field plus the wrapper-specific settings is
- * exposed as a string key with a value parsed from a string, so this
- * header (and the C++ interface built on it) stays free of qpOASES types:
+ * exposed under its name. Each option has a kind, and values are stored as
+ * that kind:
  *
- *  - booleans:      "true" / "false" (case-insensitive)
- *  - integers:      integer literal
- *  - reals:         floating-point literal
- *  - enumerations:  the enum value name, e.g. "HST_SEMIDEF", "PL_NONE"
+ *  - booleans:      `bool`
+ *  - integers:      `long long`
+ *  - reals:         `double`
+ *  - enumerations:  `std::string` holding the enum value name, e.g.
+ *                   "HST_SEMIDEF", "PL_NONE"
  *
- * Defaults match qpOASES' own defaults for a double-precision build
- * (see `Options::setToDefault()`), except `printLevel`, which defaults to
- * the least verbose level ("PL_NONE") so the solver is quiet by default
- * (qpOASES' own default is "PL_MEDIUM").
+ * `set()` also accepts strings for the other kinds ("true"/"false", an
+ * integer or floating-point literal) and an integer for a real, and
+ * converts them.
+ *
+ * Unset options use qpOASES' own defaults for a double-precision build
+ * (see `Options::setToDefault()`), taken directly from qpOASES, except
+ * `printLevel`, which defaults to the least verbose level ("PL_NONE") so
+ * the solver is quiet by default (qpOASES' own default is "PL_MEDIUM").
  *
  * @see Solver
  */
@@ -55,25 +70,33 @@ public:
     ~Configuration();
 
     /**
-     * @brief Sets the option `key` to the string value `value`.
+     * @brief Sets the option `key` to `value`.
      *
-     * The value is validated and parsed immediately, so a misspelled key
-     * or a wrong type raises `std::invalid_argument` here rather than at
-     * solve time.
+     * The value is validated and converted to the option's kind
+     * immediately, so a misspelled key or a wrong type raises
+     * `std::invalid_argument` here rather than at solve time.
      *
      * @throws std::invalid_argument if the key is unknown or the value
-     *         cannot be parsed for that option's type.
+     *         cannot be converted to that option's kind.
      */
-    void set(const std::string& key, const std::string& value);
+    void set(const std::string& key, const OptionValue& value);
 
     /**
-     * @brief Returns the string value of the option `key`.
+     * @brief Sets the option `key` from a string literal (so that it is
+     *        not converted to `bool`).
      *
-     * @return The value as a string, or the option's default when it has
-     *         not been set.
+     * @throws std::invalid_argument as `set(const std::string&, const OptionValue&)`.
+     */
+    void set(const std::string& key, const char* value);
+
+    /**
+     * @brief Returns the value of the option `key`.
+     *
+     * @return The value, as the option's kind, or the option's default when
+     *         it has not been set.
      * @throws std::invalid_argument if the key is unknown.
      */
-    std::string get(const std::string& key) const;
+    OptionValue get(const std::string& key) const;
 
     /**
      * @brief Whether the option `key` has been explicitly set.
@@ -103,17 +126,17 @@ public:
     void reset_all();
 
     /**
-     * @brief The option names and their default string values, sorted.
+     * @brief The option names and their default values, sorted.
      *
      * @return A copy of the `{name: default_value}` map.
      */
-    std::map<std::string, std::string> defaults() const;
+    std::map<std::string, OptionValue> defaults() const;
 
 private:
     friend class Solver;
 
     /** @brief Explicitly set option values, keyed by option name. */
-    std::map<std::string, std::string> options_;
+    std::map<std::string, OptionValue> options_;
 };
 
 /**
@@ -125,7 +148,7 @@ private:
  * online active-set problem object so that, once initialised, subsequent
  * calls are warm started (see the `use_hotstart` option).
  *
- * The solver is configured through a string-keyed `Configuration`.
+ * The solver is configured through a `Configuration` keyed by option name.
  *
  * @note The class is not thread-safe: a single instance owns one
  *       underlying qpOASES problem and its state changes across calls.

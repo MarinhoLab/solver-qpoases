@@ -108,7 +108,7 @@ and [qpOASES](https://github.com/coin-or/qpOASES):
 namespace qpoases = marinholab::solvers::qpoases;
 
 qpoases::Configuration config;
-config.set("terminationTolerance", "1.0e-9");  // the rest keeps its defaults
+config.set("terminationTolerance", 1.0e-9);  // the rest keeps its defaults
 
 qpoases::Solver solver(config);
 
@@ -132,7 +132,7 @@ Eigen::VectorXd active_set = solver.get_active_set();  // e.g. [1, 0]
 
 The API mirrors the Python one: `solve_quadratic_program(H, f, A, b, Aeq, beq)`
 solves the QP above, and `get_active_set()` reports the active constraints with
-the same `-1` / `0` / `+1` convention. `Configuration` is string-keyed (see
+the same `-1` / `0` / `+1` convention. `Configuration` is keyed by option name (see
 below); a runnable version lives in [`example/example.cpp`](example/example.cpp).
 
 To build and run it (the example is off by default so `pip install .` is
@@ -147,12 +147,11 @@ cmake --build build
 ## Configuration
 
 All of qpOASES' `Options` fields are exposed, plus a few wrapper-specific
-settings. The `Configuration` is **string-keyed** — options are set by name
-with a string value — so the public API (and the C++ header) stays free of
-qpOASES types. Values are strings: booleans are `"true"`/`"false"`, numbers
-are literals, and enum options take the enum value name (e.g. `"HST_SEMIDEF"`,
-`"PL_NONE"`). Defaults match qpOASES' double-precision defaults except
-`printLevel` (`"PL_NONE"`).
+settings, by name. Values are typed: `bool`, `int`, `float`, or, for enum
+options, the enum value name (e.g. `"HST_SEMIDEF"`, `"PL_NONE"`), so the public
+API (and the C++ header, where values are a `std::variant<bool, long long,
+double, std::string>`) stays free of qpOASES types. Unset options use qpOASES'
+own double-precision defaults except `printLevel` (`"PL_NONE"`).
 
 ```python
 config = qpoases.Configuration()
@@ -161,20 +160,22 @@ config.set("terminationTolerance", 1.0e-9)                   # tighter convergen
 solver = qpoases.Solver(config)
 ```
 
-`set()` accepts a string, an enum member (used by its name), a number, or a
-bool, so the last two lines above work just as well as
-`config.set("terminationTolerance", "1.0e-9")`. The other accessors are:
+`set()` accepts a bool, an int, a float, an enum member (used by its name), or
+a string, converted to the option's kind: `config.set("terminationTolerance",
+"1.0e-9")` also works, and an int is accepted for a real option. The other
+accessors are:
 
 | Method | Returns |
 |---|---|
-| `config.get(key)` | the option's value as a string (or its default) |
+| `config.get(key)` | the option's value as `bool`, `int`, `float`, or `str` (or its default) |
 | `config.has(key)` | whether `key` has been explicitly set |
 | `config.keys()` | sorted list of all settable option names |
-| `config.defaults()` | mapping of option name -> default string value |
+| `config.defaults()` | mapping of option name -> default value |
 | `config.reset(key)` / `config.reset_all()` | revert to the default(s) |
 
-Setting an unknown key, or a value that does not parse for the option's type,
-raises `ValueError`.
+Setting an unknown key, or a value that does not convert to the option's kind
+(e.g. `1.5` for an integer option or `True` for a real one), raises
+`ValueError`.
 
 The enum types are re-exported for convenience: `qpoases.BooleanType`,
 `qpoases.HessianType`, `qpoases.PrintLevel`, and `qpoases.SubjectToStatus`.
