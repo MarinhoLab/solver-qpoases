@@ -4,8 +4,10 @@ Originally by Murilo M. Marinho
 */
 #include <algorithm>
 #include <cctype>
-#include <cstdio>
 #include <cstdlib>
+#include <iomanip>
+#include <locale>
+#include <sstream>
 #include <stdexcept>
 
 #include <marinholab/solvers/qpoases.h>
@@ -162,19 +164,27 @@ inline T parse_enum(const std::string& key, const std::string& value,
  * @brief Formats a real so that it reads back exactly.
  *
  * std::to_string prints six decimals, which turns qpOASES' small tolerances
- * (e.g. epsNum = -1e3 * EPS) into zero. %.15g is tried first for a short
- * string, then %.17g, which always round-trips a double.
+ * (e.g. epsNum = -1e3 * EPS) into zero. 15 significant digits are tried
+ * first for a short string, then 17, which always round-trips a double.
+ * (snprintf is avoided: qpOASES defines it as a macro for _snprintf on MSVC.)
  */
 inline std::string real_to_string(double value)
 {
-    char buffer[32];
+    std::string text;
     for (int precision : {15, 17})
     {
-        std::snprintf(buffer, sizeof(buffer), "%.*g", precision, value);
-        if (std::strtod(buffer, nullptr) == value)
+        std::ostringstream stream;
+        stream.imbue(std::locale::classic());
+        stream << std::setprecision(precision) << value;
+        text = stream.str();
+        std::istringstream back(text);
+        back.imbue(std::locale::classic());
+        double parsed = 0.0;
+        back >> parsed;
+        if (parsed == value)
             break;
     }
-    return std::string(buffer);
+    return text;
 }
 
 /**
