@@ -51,19 +51,28 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install build
           python -m build --wheel
-      - name: Rename wheel (Ubuntu Only)
+      # PyPI requires a manylinux tag on Linux wheels. Renaming linux_* to
+      # manylinux2014 claimed glibc 2.17, but these wheels are built on
+      # Ubuntu 24.04 and reference GLIBC_2.38 symbols, so on older systems pip
+      # installed them and the import failed. auditwheel checks the binary and
+      # tags it with the manylinux policy it really satisfies (--plat auto),
+      # e.g. manylinux_2_39, and removes the untagged wheel it repaired.
+      - name: Repair wheel (Ubuntu only, manylinux tag)
         if: startsWith(matrix.os,'ubuntu')
         run: |
-          sudo apt-get install rename
-          cd dist
-          ls -lah
-          rename 's/linux/manylinux2014/' *
-          cd ..
-          cd ..
+          sudo apt-get install -y patchelf
+          python -m pip install auditwheel
+          auditwheel repair --plat auto -w dist/ dist/*-linux_*.whl
+          rm -f dist/*-linux_*.whl
+          ls -lah dist
       - name: Upload
         uses: actions/upload-artifact@v7
         with:
-          name: wheel-${{ runner.os }}-py${{ matrix.python-version }}
+          # One artifact per matrix job: runner.os is "Linux" for both
+          # ubuntu-latest (x86_64) and ubuntu-24.04-arm (aarch64), so naming
+          # by it made the two Linux jobs of each Python version share one
+          # artifact, and only one of the two wheels reached PyPI.
+          name: wheel-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist/
 
 
