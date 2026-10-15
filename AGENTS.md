@@ -20,7 +20,7 @@ marinholab/solvers/qpoases/
 include/marinholab/solvers/qpoases.h C++ header (Solver + Configuration) — qpOASES-free (pimpl Solver; Configuration keyed by name with typed `OptionValue`s)
 src/core.cpp             pybind11 module (_core): binds `Solver` + `Configuration` (set/get/has/keys/defaults/reset) with native Python values
 src/core_function.cpp    C++ implementation (wraps qpOASES' QPSolver via pimpl); option name->string map; compiled into the `marinholab_qpoases` library (shared by default, `-DBUILD_SHARED_LIBS=OFF` for static)
-CMakeLists.txt           CMake build: `marinholab_qpoases` lib (shared by default), `_core` pybind11 module (`-DBUILD_PYTHON=ON`), optional C++ example (`-DBUILD_EXAMPLES=ON`). The vendored qpOASES is always built **static**, linked **PRIVATE** into `marinholab_qpoases`, and its archive is bundled/installed with the package — consumers only link `marinholab::solvers::qpoases`.
+CMakeLists.txt           CMake build: `marinholab_qpoases` lib (shared by default), `_core` pybind11 module (`-DBUILD_PYTHON=ON`), optional C++ example (`-DBUILD_EXAMPLES=ON`). The vendored qpOASES is always built **static**, linked **PRIVATE** into `marinholab_qpoases`, and added `EXCLUDE_FROM_ALL` so its own install rules are skipped — consumers only link `marinholab::solvers::qpoases`; qpOASES' *headers* are installed by this project.
 example/example.cpp      standalone C++ usage example (target: `example_qpoases`)
 tests/test_solver.py     pytest tests for `Solver` (see "Tests")
 qpOASES/                 qpOASES (git submodule)
@@ -170,21 +170,50 @@ build on **both** architectures.
 
 ```console
 bash docker/build-deb.sh            # build the .deb -> ./.deb-out/
-bash docker/build-deb.sh --test     # + install it and build/run a
-                                    # find_package consumer inside the container
+bash docker/build-deb.sh --test     # + install it and build/run docker/consumer
+                                    # against it, twice (re-entrancy check)
+bash docker/test-ppa.sh             # same consumer against the *published*
+                                    # package, from a bare ubuntu:noble
+bash docker/test-ppa.sh --native    # ... current architecture only
 ```
+
+`docker/consumer/` is a standalone downstream project: `find_package` plus
+`target_link_libraries(marinholab::solvers::qpoases)`, nothing else. Its
+`main.cpp` solves several QPs (definite, semi-definite, equality-constrained,
+warm-started) and exits non-zero if any answer is wrong, so both scripts fail
+the build on bad numbers rather than on a clean exit. `DUPLICATE_FIND_PACKAGE=ON`
+makes it resolve the package a second time, which is what catches a config file
+that is not re-entrant.
+
+`build-deb.sh --test` and `test-ppa.sh` are the two ends of the same contract:
+the former must pass before publishing, the latter proves the published
+artifact is still usable. `test-ppa.sh` deliberately starts from a bare
+`ubuntu:noble` so nothing from the source tree can mask a broken package.
+
+The package must depend on nothing but libc6/libgcc-s1/libstdc++6 (`${shlibs:Depends}`)
+— qpOASES is linked statically and is fully private. Verified 2026-10-15 (amd64
++ arm64 against the published 26.10.00, and a locally built .deb): consumer
+builds and every solution is correct. Two things to keep in mind:
+
+* `marinholab_solver_qpoases-config.cmake` is re-read on every `find_package()`
+  call, so it must not create `marinholab::solvers::qpoases` unconditionally —
+  guard it with `NOT TARGET`, or any project that resolves the package twice
+  (superbuild, several components) dies with "another target with the same name
+  already exists".
+* Do not let the vendored qpOASES install into the package. Its
+  `CMakeLists.txt` has its own `install()` rules; if they run, the package
+  gains `libqpOASES.a` and `cmake/qpOASES/`, which makes a *different* project's
+  `find_package(qpOASES)` resolve onto this private copy. Hence
+  `add_subdirectory(qpOASES EXCLUDE_FROM_ALL)` — build it, don't install it.
+
+Adding a consumer to a container without `libeigen3-dev` fails inside
+`find_dependency(Eigen3)`; that is correct (the public header exposes Eigen
+types), so the toolchain must be installed alongside the package.
 
 `debian/rules` appends `-fno-lto` after the `dpkg-buildflags` defaults:
 Ubuntu noble enables `-flto=auto`, and LTO hits a GCC 13 linker internal
 compiler error on x86-64 when linking the vendored static qpOASES archive
 (`lto1: return_token, opts-common.cc:2137`). Do not re-enable LTO.
-
-Verified (2026-09-28, commit `fix-amd64-lto-debian-build` / PR #14): on both
-amd64 and arm64 — `dpkg-buildpackage` succeeds, the `.deb` installs, and a
-`find_package(marinholab_solver_qpoases)` consumer linking
-`marinholab::solvers::qpoases` builds and solves. The `.deb` carries the
-static `libqpOASES.a` (bundled) plus the headers; `Depends` is only
-libc6/libgcc-s1/libstdc++6, i.e. qpOASES is fully private.
 
 ## Version
 
