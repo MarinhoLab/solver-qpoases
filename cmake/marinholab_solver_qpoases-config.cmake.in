@@ -1,7 +1,9 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-# The public header uses Eigen types in its method signatures.
+# The public header exposes Eigen types in its API, so Eigen is a *build*
+# dependency of every consumer even though this package needs nothing but
+# libc/libstdc++ at run time. On Debian/Ubuntu: apt-get install libeigen3-dev.
 find_dependency(Eigen3)
 # qpOASES is a private implementation detail, not a consumer-facing
 # dependency: its static archive is linked into marinholab_solver_qpoases
@@ -18,7 +20,12 @@ find_path(marinholab_solver_qpoases_INCLUDE_DIR NAMES marinholab/solvers/qpoases
 # installed into ${CMAKE_INSTALL_INCLUDEDIR}), so consumers that include
 # marinholab/solvers/qpoases.h can resolve <qpOASES.hpp> without exposing
 # qpOASES as a CMake dependency.
-if(marinholab_solver_qpoases_LIBRARY AND marinholab_solver_qpoases_INCLUDE_DIR)
+#
+# The target is created only if it does not exist yet: this file is re-processed
+# on every find_package() call, so creating it unconditionally aborts with
+# "another target with the same name already exists" in any project that
+# resolves the package more than once.
+if(marinholab_solver_qpoases_LIBRARY AND marinholab_solver_qpoases_INCLUDE_DIR AND NOT TARGET marinholab::solvers::qpoases)
     add_library(marinholab::solvers::qpoases SHARED IMPORTED)
     set_target_properties(marinholab::solvers::qpoases PROPERTIES
         IMPORTED_LOCATION "${marinholab_solver_qpoases_LIBRARY}"

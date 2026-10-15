@@ -25,11 +25,11 @@ find_package(Eigen3 REQUIRED)
 
 # https://stackoverflow.com/questions/38296756/what-is-the-idiomatic-way-in-cmake-to-add-the-fpic-compiler-option
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-# qpOASES is always built as a *static* library: its archive is bundled
-# (installed) with our package rather than shipped as a separate shared object.
-# The Python build additionally links it into the pybind11 module, so our own
-# library must be static there as well; the C++-only build lets
-# marinholab_qpoases follow BUILD_SHARED_LIBS (shared by default).
+# qpOASES is always built as a *static* library: its code is linked into our
+# library rather than shipped as a separate shared object. The Python build
+# additionally links it into the pybind11 module, so our own library must be
+# static there as well; the C++-only build lets marinholab_qpoases follow
+# BUILD_SHARED_LIBS (shared by default).
 if(BUILD_PYTHON)
     set(BUILD_SHARED_LIBS FALSE CACHE BOOL "x" FORCE)
 endif()
@@ -38,7 +38,12 @@ set(QPOASES_BUILD_EXAMPLES FALSE)
 # Shadow the shared-lib default so the vendored qpOASES builds static here even
 # when our own library is shared; unset restores it for the targets below.
 set(BUILD_SHARED_LIBS FALSE)
-add_subdirectory(qpOASES)
+# EXCLUDE_FROM_ALL: still built (marinholab_qpoases links it PRIVATE), but its
+# install rules are skipped, so the package does not also ship libqpOASES.a and
+# a global cmake/qpOASES/ config that would claim the qpOASES package name on
+# the machine. qpOASES is a private dependency here, not something consumers
+# find_package(); the *headers* are installed explicitly below instead.
+add_subdirectory(qpOASES EXCLUDE_FROM_ALL)
 unset(BUILD_SHARED_LIBS)
 
 # The Solver/Configuration implementation. Both the pybind11 module and the
@@ -107,6 +112,13 @@ install(TARGETS marinholab_qpoases
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+# qpOASES' own install rules are excluded above, so its headers are installed
+# here instead: the public header does not include them, but they are part of
+# the include directory the package advertises, and consumers that reach for
+# <qpOASES.hpp> must keep finding it.
+install(DIRECTORY qpOASES/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        FILES_MATCHING PATTERN "*.hpp" PATTERN "*.ipp")
 
 if(BUILD_EXAMPLES)
     install(TARGETS example_qpoases RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
